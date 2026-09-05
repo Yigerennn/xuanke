@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>上财选课心愿单</title>
+<style>
+  :root { --main:#b02a37; --dark:#1f2937; --bg:#f3f4f6; --line:#e5e7eb; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif; background:var(--bg); color:var(--dark); }
+  header { background:var(--main); color:#fff; padding:14px 20px; }
+  header h1 { margin:0; font-size:20px; }
+  header p { margin:4px 0 0; font-size:12px; opacity:.85; }
+  main { max-width:980px; margin:16px auto; padding:0 12px 40px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:14px; }
+  .card h2 { margin:0 0 10px; font-size:15px; color:var(--main); }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  input,select,textarea { padding:7px 9px; border:1px solid var(--line); border-radius:7px; font-size:14px; font-family:inherit; }
+  input[type=text] { min-width:110px; }
+  label.sm { font-size:12px; color:#6b7280; display:flex; flex-direction:column; gap:3px; }
+  button { padding:7px 13px; border:none; border-radius:7px; cursor:pointer; font-size:13px; }
+  .b-main { background:var(--main); color:#fff; }
+  .b-ghost { background:#eef2f7; color:#374151; }
+  .b-danger { background:#fee2e2; color:#b91c1c; }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th,td { padding:8px 6px; border-bottom:1px solid var(--line); text-align:left; vertical-align:middle; }
+  th { background:#fafafa; color:#6b7280; font-weight:600; }
+  .tag { display:inline-block; padding:2px 8px; border-radius:20px; font-size:12px; white-space:nowrap; }
+  .t-must { background:#fde8e8; color:#b91c1c; }
+  .t-sport { background:#dcfce7; color:#166534; }
+  .t-eng   { background:#dbeafe; color:#1e40af; }
+  .t-gen   { background:#f3e8ff; color:#6b21a8; }
+  .t-elec  { background:#fef9c3; color:#854d0e; }
+  .t-main  { background:#eef2ff; color:#3730a3; }
+  .t-back  { background:#f3f4f6; color:#6b7280; }
+  .prio { font-weight:700; }
+  .empty { color:#9ca3af; text-align:center; padding:18px 0; }
+  .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; align-items:center; }
+  .stats { font-size:12px; color:#6b7280; margin-left:auto; }
+  .note { background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; padding:10px 12px; font-size:12px; color:#9a3412; line-height:1.7; }
+  a { color:var(--main); }
+</style>
+</head>
+<body>
+<header>
+  <h1>上财选课心愿单(本地工具)</h1>
+  <p>数据只保存在你自己的浏览器里 · 配套监测脚本见同一文件夹 README.md</p>
+</header>
+<main>
+
+  <div class="card">
+    <div class="note">
+      <b>使用提示:</b>① 录入想选的课(课程序号以选课系统里显示为准,填了序号才能被监测脚本精确定位);
+      ② 「主选」放第一志愿课程,「备选」放抢不到时的候选课;③ 完成后把 JSON 导入监测脚本(右下面板),或点「复制课程序号清单」粘到选课系统搜索框逐个查。
+      <br>规则提醒:监测到空位后由你本人手动点"选课"确认,脚本不会替你提交;请遵守学校通知中关于选课系统的要求。
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>添加 / 编辑课程</h2>
+    <form id="form" class="row">
+      <input type="hidden" id="f_id">
+      <label class="sm">课程名称<input type="text" id="f_name" placeholder="例:羽毛球 I"></label>
+      <label class="sm">课程序号 *<input type="text" id="f_code" required placeholder="例:SPT000123"></label>
+      <label class="sm">优先级(1 最高)<select id="f_prio">
+        <option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option>
+      </select></label>
+      <label class="sm">课程类型<select id="f_type">
+        <option>必修</option><option>体育</option><option>英语</option><option>通识</option><option>选修</option><option>其他</option>
+      </select></label>
+      <label class="sm">志愿<select id="f_status">
+        <option value="main">主选</option><option value="backup">备选</option>
+      </select></label>
+      <label class="sm">时间(可选)<input type="text" id="f_time" placeholder="如:周一 3-4 节"></label>
+      <label class="sm">备注(可选)<input type="text" id="f_note" placeholder="教师/校区等"></label>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start;">
+        <button type="submit" class="b-main" id="btn_submit">添加</button>
+        <button type="button" class="b-ghost" id="btn_reset" hidden>取消编辑</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>课程列表</h2>
+    <div class="toolbar">
+      <label class="sm">筛选志愿
+        <select id="f_filter"><option value="all">全部</option><option value="main">仅主选</option><option value="backup">仅备选</option></select>
+      </label>
+      <label class="sm">关键词
+        <input type="text" id="f_q" placeholder="名称 / 序号" style="width:140px">
+      </label>
+      <button class="b-ghost" id="btn_export">导出 JSON</button>
+      <button class="b-ghost" id="btn_import">导入 JSON</button>
+      <button class="b-ghost" id="btn_copy">复制课程序号清单</button>
+      <button class="b-danger" id="btn_clear">清空全部</button>
+      <span class="stats" id="stats"></span>
+    </div>
+    <table>
+      <thead><tr><th style="width:34px">#</th><th>名称</th><th>课程序号</th><th>优先</th><th>类型</th><th>志愿</th><th>时间</th><th style="width:190px">操作</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="empty" hidden>还没有课程,先在上方表单添加第一门吧。</div>
+  </div>
+
+  <div class="card">
+    <h2>导入 / 导出</h2>
+    <p style="font-size:13px;color:#6b7280;margin:0 0 8px;">
+      导出的 JSON 可备份;也可直接粘贴到监测脚本面板(选课助手 → 输入框 → 导入),两边共用同一份清单。
+    </p>
+    <textarea id="io_box" rows="5" style="width:100%" placeholder="导出的 JSON 会显示在这里;也可以把 JSON 粘贴进来,点下方‘从文本导入’"></textarea>
+    <div class="row" style="margin-top:8px">
+      <button class="b-ghost" id="btn_export2">导出到文本框</button>
+      <button class="b-ghost" id="btn_import2">从下方文本导入</button>
+    </div>
+  </div>
+
+</main>
+
+<script>
+(function(){
+  var KEY='sufe_xk_wishlist_v1';
+  function nowISO(){ return new Date().toISOString(); }
+  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+  function load(){
+    try{ var raw=localStorage.getItem(KEY); if(raw){ var o=JSON.parse(raw); if(o&&Array.isArray(o.items)) return o; } }catch(e){}
+    return { version:1, updatedAt:nowISO(), items:[] };
+  }
+  function save(){ state.updatedAt=nowISO(); localStorage.setItem(KEY,JSON.stringify(state)); render(); }
+  var state=load();
+
+  var $=function(id){ return document.getElementById(id); };
+  var form=$('form'), f_id=$('f_id'), f_name=$('f_name'), f_code=$('f_code'), f_prio=$('f_prio'),
+      f_type=$('f_type'), f_status=$('f_status'), f_time=$('f_time'), f_note=$('f_note');
+
+  function typeTag(t){
+    var map={ '必修':'t-must','体育':'t-sport','英语':'t-eng','通识':'t-gen','选修':'t-elec','其他':'t-elec' };
+    return '<span class="tag '+(map[t]||'t-elec')+'">'+t+'</span>';
+  }
+  function statusTag(s){ return s==='main' ? '<span class="tag t-main">主选</span>' : '<span class="tag t-back">备选</span>'; }
+
+  function visibleItems(){
+    var fl=$('f_filter').value, q=($('f_q').value||'').trim().toLowerCase();
+    return state.items.filter(function(it){
+      if(fl!=='all' && it.status!==fl) return false;
+      if(q && (it.name||'').toLowerCase().indexOf(q)<0 && (it.code||'').toLowerCase().indexOf(q)<0) return false;
+      return true;
+    }).sort(function(a,b){ return (a.status===b.status ? (a.prio-b.prio || (a.name<b.name?-1:1)) : (a.status==='main'?-1:1)); });
+  }
+
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function render(){
+    var list=visibleItems();
+    $('empty').hidden=list.length>0;
+    $('stats').textContent='共 '+state.items.length+' 门:主选 '+state.items.filter(function(i){return i.status==='main';}).length+
+      ' / 备选 '+state.items.filter(function(i){return i.status==='backup';}).length+' · 更新 '+new Date(state.updatedAt).toLocaleString();
+    var tb=$('tbody'); tb.innerHTML='';
+    list.forEach(function(it,idx){
+      var tr=document.createElement('tr');
+      tr.innerHTML='<td>'+(idx+1)+'</td>'+
+        '<td><b>'+esc(it.name)+'</b>'+(it.note?'<br><span style="color:#9ca3af;font-size:12px">'+esc(it.note)+'</span>':'')+'</td>'+
+        '<td><code>'+esc(it.code)+'</code></td>'+
+        '<td class="prio" style="color:'+(it.prio<=1?'#b91c1c':it.prio<=2?'#d97706':'#1f2937')+'">'+it.prio+'</td>'+
+        '<td>'+typeTag(it.type)+'</td><td>'+statusTag(it.status)+'</td>'+
+        '<td style="font-size:12px">'+esc(it.time||'-')+'</td>'+
+        '<td style="white-space:nowrap">'+
+          '<button class="b-ghost" data-act="up">↑</button> '+
+          '<button class="b-ghost" data-act="down">↓</button> '+
+          '<button class="b-ghost" data-act="edit">编辑</button> '+
+          '<button class="b-danger" data-act="del">删</button></td>';
+      tr._it=it; tb.appendChild(tr);
+    });
+    tb.querySelectorAll('button').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var tr=btn.closest('tr'), it=tr?tr._it:null; if(!it) return;
+        var act=btn.getAttribute('data-act');
+        if(act==='up'||act==='down'){
+          var arr=state.items; var i=arr.indexOf(it), j=act==='up'?i-1:i+1;
+          if(j<0||j>=arr.length) return;
+          arr.splice(i,1); arr.splice(j,0,it); save();
+        } else if(act==='edit'){
+          f_id.value=it.id; f_name.value=it.name; f_code.value=it.code; f_prio.value=it.prio;
+          f_type.value=it.type||'其他'; f_status.value=it.status; f_time.value=it.time||''; f_note.value=it.note||'';
+          $('btn_submit').textContent='保存修改'; $('btn_reset').hidden=false;
+          window.scrollTo({top:0,behavior:'smooth'});
+        } else if(act==='del'){
+          if(confirm('删除「'+it.name+'」?')){ state.items=state.items.filter(function(x){return x.id!==it.id;}); save(); }
+        }
+      });
+    });
+  }
+
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    var code=f_code.value.trim(); if(!code){ alert('课程序号不能为空'); return; }
+    var id=f_id.value;
+    var obj={ id:id||uid(), name:f_name.value.trim()||code, code:code, prio:parseInt(f_prio.value,10)||3,
+              type:f_type.value, status:f_status.value==='backup'?'backup':'main',
+              time:f_time.value.trim(), note:f_note.value.trim() };
+    if(id){ var hit=state.items.find(function(x){return x.id===id;}); if(hit) Object.assign(hit,obj); }
+    else state.items.push(obj);
+    form.reset(); f_id.value=''; $('btn_submit').textContent='添加'; $('btn_reset').hidden=true;
+    save();
+  });
+
+  $('btn_reset').addEventListener('click',function(){
+    form.reset(); f_id.value=''; $('btn_submit').textContent='添加'; this.hidden=true;
+  });
+
+  function exportText(){ return JSON.stringify({version:1,updatedAt:state.updatedAt,items:state.items},null,2); }
+
+  $('btn_export').addEventListener('click',function(){
+    $('io_box').value=exportText();
+    var blob=new Blob([exportText()],{type:'application/json'});
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download='上财选课心愿单-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+    setTimeout(function(){URL.revokeObjectURL(a.href);},800);
+  });
+  $('btn_export2').addEventListener('click',function(){ $('io_box').value=exportText(); });
+
+  function importJSON(text){
+    try{
+      var o=JSON.parse(text);
+      var arr=Array.isArray(o)?o:(o&&Array.isArray(o.items)?o.items:null);
+      if(!arr) throw new Error('无法识别为心愿单 JSON');
+      var before=state.items.length, added=0;
+      arr.forEach(function(it){
+        if(!it||!it.code) return;
+        var code=String(it.code);
+        if(state.items.some(function(x){return x.code===code;})) return;
+        state.items.push({ id:uid(), name:(it.name||code), code:code,
+          prio:parseInt(it.prio,10)||3, type:it.type||'其他', status:(it.status==='backup'?'backup':'main'),
+          time:it.time||'', note:it.note||'' });
+        added++;
+      });
+      save();
+      alert('本次新增 '+added+' 门(原有 '+before+' 门保留)。如需整体替换,请先“清空全部”。');
+    }catch(err){ alert('导入失败:'+err.message); }
+  }
+  $('btn_import').addEventListener('click',function(){ var t=prompt('把心愿单 JSON 粘贴到这里(从备份或导出内容复制)'); if(t) importJSON(t); });
+  $('btn_import2').addEventListener('click',function(){ importJSON($('io_box').value); });
+
+  $('btn_copy').addEventListener('click',function(){
+    var main=state.items.filter(function(i){return i.status==='main';}).map(function(i){return i.code;});
+    var back=state.items.filter(function(i){return i.status==='backup';}).map(function(i){return i.code;});
+    var txt='【主选】\n'+main.join('\n')+'\n\n【备选】\n'+back.join('\n');
+    function fallback(){
+      var ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); alert('已复制课程序号清单,可粘贴到选课系统搜索框。'); }
+      catch(e){ $('io_box').value=txt; alert('自动复制被浏览器拦截,请手动复制下方文本框内容。'); }
+      document.body.removeChild(ta);
+    }
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(function(){ alert('已复制课程序号清单,可粘贴到选课系统搜索框。'); },fallback);
+    } else fallback();
+  });
+
+  $('btn_clear').addEventListener('click',function(){
+    if(confirm('确定清空全部课程?可先“导出 JSON”备份。')){ state.items=[]; save(); }
+  });
+
+  $('f_filter').addEventListener('change',render);
+  $('f_q').addEventListener('input',render);
+
+  render();
+})();
+</script>
+</body>
+</html>
