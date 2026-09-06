@@ -3,28 +3,29 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>上财选课心愿单</title>
+<title>上财选课心愿单 v1.3</title>
 <style>
   :root { --main:#b02a37; --dark:#1f2937; --bg:#f3f4f6; --line:#e5e7eb; }
   * { box-sizing:border-box; }
   body { margin:0; font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif; background:var(--bg); color:var(--dark); }
-  header { background:var(--main); color:#fff; padding:14px 20px; }
+  header { background:var(--main); color:#fff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
   header h1 { margin:0; font-size:20px; }
-  header p { margin:4px 0 0; font-size:12px; opacity:.85; }
-  main { max-width:980px; margin:16px auto; padding:0 12px 40px; }
+  header .sub { font-size:12px; opacity:.85; margin-top:3px; }
+  #profile_chip { background:rgba(255,255,255,.16); border-radius:20px; padding:6px 12px; font-size:13px; cursor:pointer; border:none; color:#fff; }
+  main { max-width:1040px; margin:16px auto; padding:0 12px 40px; }
   .card { background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:14px; }
   .card h2 { margin:0 0 10px; font-size:15px; color:var(--main); }
   .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
   input,select,textarea { padding:7px 9px; border:1px solid var(--line); border-radius:7px; font-size:14px; font-family:inherit; }
-  input[type=text] { min-width:110px; }
   label.sm { font-size:12px; color:#6b7280; display:flex; flex-direction:column; gap:3px; }
   button { padding:7px 13px; border:none; border-radius:7px; cursor:pointer; font-size:13px; }
   .b-main { background:var(--main); color:#fff; }
   .b-ghost { background:#eef2f7; color:#374151; }
   .b-danger { background:#fee2e2; color:#b91c1c; }
+  .b-ok { background:#16a34a; color:#fff; }
   button:disabled { opacity:.45; cursor:not-allowed; }
   table { width:100%; border-collapse:collapse; font-size:13px; }
-  th,td { padding:8px 6px; border-bottom:1px solid var(--line); text-align:left; vertical-align:middle; }
+  th,td { padding:7px 6px; border-bottom:1px solid var(--line); text-align:left; vertical-align:middle; }
   th { background:#fafafa; color:#6b7280; font-weight:600; }
   .tag { display:inline-block; padding:2px 8px; border-radius:20px; font-size:12px; white-space:nowrap; }
   .t-must { background:#fde8e8; color:#b91c1c; }
@@ -34,75 +35,94 @@
   .t-elec  { background:#fef9c3; color:#854d0e; }
   .t-main  { background:#eef2ff; color:#3730a3; }
   .t-back  { background:#f3f4f6; color:#6b7280; }
+  .t-ok    { background:#dcfce7; color:#166534; }
+  .t-no    { background:#fee2e2; color:#b91c1c; }
   .prio { font-weight:700; }
   .empty { color:#9ca3af; text-align:center; padding:18px 0; }
   .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; align-items:center; }
   .stats { font-size:12px; color:#6b7280; margin-left:auto; }
   .note { background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; padding:10px 12px; font-size:12px; color:#9a3412; line-height:1.7; }
-  a { color:var(--main); }
+  .note2 { background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px 12px; font-size:12px; color:#1e40af; line-height:1.7; }
   .cat-hit { border:1px solid var(--line); border-radius:8px; padding:7px 10px; margin-bottom:6px; cursor:pointer; font-size:13px; }
   .cat-hit:hover { border-color:var(--main); background:#fdf2f2; }
+  .cat-hit.no { opacity:.75; }
   .cat-hit .meta { color:#6b7280; font-size:12px; margin-top:2px; word-break:break-all; }
   .cat-empty { color:#9ca3af; font-size:12px; padding:8px 2px; }
+  .banner { background:#fef2f2; border:1px solid #fecaca; color:#b91c1c; border-radius:8px; padding:8px 12px; font-size:13px; margin-bottom:10px; }
+  .banner.ok { background:#f0fdf4; border-color:#bbf7d0; color:#166534; }
+  .modal-mask { position:fixed; inset:0; background:rgba(15,23,42,.45); display:flex; align-items:center; justify-content:center; z-index:99; }
+  .modal { background:#fff; border-radius:12px; padding:20px; max-width:520px; width:94%; box-shadow:0 10px 40px rgba(0,0,0,.25); }
+  .modal h2 { margin:0 0 6px; color:var(--main); font-size:17px; }
+  .modal p { font-size:13px; color:#6b7280; margin:4px 0 12px; line-height:1.7; }
+  .modal .row { margin-top:12px; }
+  #hide_note_btn { margin-left:auto; }
 </style>
 </head>
 <body>
 <header>
-  <h1>上财选课心愿单(本地工具)</h1>
-  <p>数据只保存在你自己的浏览器里 · 配套监测脚本见同一文件夹 README.md</p>
+  <div>
+    <h1>上财选课心愿单 <span id="ver" style="font-size:12px;opacity:.9">v1.3</span></h1>
+    <div class="sub">数据只保存在你自己的浏览器(不上传) · 录入编号自动补全 · 按班级自动筛选可选课程</div>
+  </div>
+  <button id="profile_chip">未填写个人信息 → 填写(用于筛选)</button>
 </header>
 <main>
+  <div id="banner_holder"></div>
 
   <div class="card">
-    <div class="note">
-      <b>使用提示:</b>① 录入想选的课(课程序号以选课系统里显示为准,填了序号才能被监测脚本精确定位);
-      ② 「主选」放第一志愿课程,「备选」放抢不到时的候选课;③ 完成后把 JSON 导入监测脚本(右下面板),或点「复制课程序号清单」粘到选课系统搜索框逐个查。
-      <br>规则提醒:监测到空位后由你本人手动点"选课"确认,脚本不会替你提交;请遵守学校通知中关于选课系统的要求。
+    <h2>① 个人信息(仅用于"你的班级能选哪些课"的本地筛选)</h2>
+    <div class="row" style="align-items:flex-end">
+      <label class="sm">姓名<input type="text" id="p_name" placeholder="选填" style="width:130px"></label>
+      <label class="sm">学号<input type="text" id="p_no" placeholder="选填,如 2026111149" style="width:170px"></label>
+      <label class="sm" style="flex:1;min-width:280px">专业班级(用于按《选课手册》筛选英语/体育可选班次)
+        <input type="text" id="p_cls" list="cls_list" placeholder="例如:26国会ACCA、26金融学1班、26经济学拔尖班…">
+      </label>
+      <datalist id="cls_list"></datalist>
+      <button class="b-main" id="p_save">保存</button>
+      <button class="b-ghost" id="p_clear">清除</button>
+    </div>
+    <div class="note2" style="margin-top:10px">
+      <b>用途说明:</b>手册中英语、体育课程按班级课表限定了可选时段。填好班级后,助手会标出该班次是否对你开放
+      (例如 26国会ACCA 的同学英语只能在"星期二 3-4"的班次里选,0123108367 这类不在名单内的班次会被标为不可选)。
+      名单依据手册印刷内容,若有出入以 9/10 当天教管系统为准;未在手册中列明的班次一律视为开放。
     </div>
   </div>
 
   <div class="card">
-    <h2>添加 / 编辑课程</h2>
+    <h2>② 添加课程(输入编号自动补全)</h2>
+    <div class="note" style="margin-bottom:10px">
+      <b>用法:</b>在"课程序号 *"或下方查询框输入 <b>6 位课程代码</b>(如 105369)或 <b>10 位课程序号</b>(手册数字列):
+      唯一匹配自动补全;多个班次(不同老师/时间)会列出候选,点选或按回车选第一个。绿色=你班级可选,红色=手册名单不含(需关闭筛选或确认后强加)。
+    </div>
     <form id="form" class="row">
       <input type="hidden" id="f_id">
-      <label class="sm">课程名称<input type="text" id="f_name" placeholder="例:羽毛球 I"></label>
-      <label class="sm">课程序号 *<input type="text" id="f_code" required placeholder="例:SPT000123"></label>
-      <label class="sm">优先级(1 最高)<select id="f_prio">
-        <option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option>
-      </select></label>
-      <label class="sm">课程类型<select id="f_type">
-        <option>必修</option><option>体育</option><option>英语</option><option>通识</option><option>选修</option><option>其他</option>
-      </select></label>
-      <label class="sm">志愿<select id="f_status">
-        <option value="main">主选</option><option value="backup">备选</option>
-      </select></label>
-      <label class="sm">时间(可选)<input type="text" id="f_time" placeholder="如:周一 3-4 节"></label>
-      <label class="sm">备注(可选)<input type="text" id="f_note" placeholder="教师/校区等"></label>
-      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start;">
+      <label class="sm">课程名称<input type="text" id="f_name" placeholder="自动补全或手填"></label>
+      <label class="sm">课程序号 *<input type="text" id="f_code" required placeholder="如 1059105369,输完自动补全"></label>
+      <label class="sm">优先级<select id="f_prio"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option></select></label>
+      <label class="sm">课程类型<select id="f_type"><option>必修</option><option>体育</option><option>英语</option><option>通识</option><option>选修</option><option>其他</option></select></label>
+      <label class="sm">志愿<select id="f_status"><option value="main">主选</option><option value="backup">备选</option></select></label>
+      <label class="sm">时间<input type="text" id="f_time" placeholder="自动补全"></label>
+      <label class="sm">备注<input type="text" id="f_note" placeholder="教师/校区等"></label>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start">
         <button type="submit" class="b-main" id="btn_submit">添加</button>
         <button type="button" class="b-ghost" id="btn_reset" hidden>取消编辑</button>
       </div>
     </form>
-
-    <h2 style="margin-top:16px">从《2026级新生选课手册》自动补全</h2>
-    <div class="row">
-      <label class="sm" style="flex:1">输入课程代码(6 位,如 105369)或课程序号(10 位),点结果自动填入上方表单
-        <input type="text" id="f_qcode" placeholder="例如:105369(体育I足球) / 108367(英语) / 106001(卫生保健)" style="width:100%">
+    <div style="display:flex;gap:6px;align-items:center;margin-top:10px;flex-wrap:wrap">
+      <label class="sm" style="flex:1;min-width:250px">查询:课程代码(6位)或课程序号(10位)
+        <input type="text" id="f_qcode" placeholder="例如:105369 / 108365 / 0123108367" style="width:100%">
       </label>
       <span id="cat_state" style="font-size:12px;color:#9ca3af"></span>
     </div>
-    <div id="cat_results" style="margin-top:8px;max-height:280px;overflow:auto"></div>
+    <div id="cat_results" style="margin-top:8px;max-height:300px;overflow:auto"></div>
   </div>
 
   <div class="card">
-    <h2>课程列表</h2>
+    <h2>③ 心愿单列表</h2>
     <div class="toolbar">
-      <label class="sm">筛选志愿
-        <select id="f_filter"><option value="all">全部</option><option value="main">仅主选</option><option value="backup">仅备选</option></select>
-      </label>
-      <label class="sm">关键词
-        <input type="text" id="f_q" placeholder="名称 / 序号" style="width:140px">
-      </label>
+      <label class="sm">志愿<select id="f_filter"><option value="all">全部</option><option value="main">仅主选</option><option value="backup">仅备选</option></select></label>
+      <label class="sm">关键词<input type="text" id="f_q" placeholder="名称 / 序号" style="width:140px"></label>
+      <label style="font-size:12px;display:inline-flex;align-items:center;gap:4px"><input type="checkbox" id="f_elig" checked>只显示我班级可选的</label>
       <button class="b-ghost" id="btn_export">导出 JSON</button>
       <button class="b-ghost" id="btn_import">导入 JSON</button>
       <button class="b-ghost" id="btn_copy">复制课程序号清单</button>
@@ -110,252 +130,418 @@
       <span class="stats" id="stats"></span>
     </div>
     <table>
-      <thead><tr><th style="width:34px">#</th><th>名称</th><th>课程序号</th><th>优先</th><th>类型</th><th>志愿</th><th>时间</th><th style="width:190px">操作</th></tr></thead>
+      <thead><tr><th>#</th><th>名称</th><th>课程序号</th><th>优先</th><th>类型</th><th>志愿</th><th>时间</th><th>班级资格</th><th style="width:170px">操作</th></tr></thead>
       <tbody id="tbody"></tbody>
     </table>
     <div class="empty" id="empty" hidden>还没有课程,先在上方表单添加第一门吧。</div>
   </div>
 
   <div class="card">
-    <h2>导入 / 导出</h2>
-    <p style="font-size:13px;color:#6b7280;margin:0 0 8px;">
-      导出的 JSON 可备份;也可直接粘贴到监测脚本面板(选课助手 → 输入框 → 导入),两边共用同一份清单。
-    </p>
-    <textarea id="io_box" rows="5" style="width:100%" placeholder="导出的 JSON 会显示在这里;也可以把 JSON 粘贴进来,点下方‘从文本导入’"></textarea>
+    <h2>④ 导入 / 导出</h2>
+    <p style="font-size:13px;color:#6b7280;margin:0 0 8px;">导出 JSON 可备份,也可粘贴到监测脚本(选课助手面板→导入)共用同一份清单。</p>
+    <textarea id="io_box" rows="4" style="width:100%" placeholder="导出的 JSON 会显示在这里;也可粘贴 JSON 后点下方导入"></textarea>
     <div class="row" style="margin-top:8px">
       <button class="b-ghost" id="btn_export2">导出到文本框</button>
       <button class="b-ghost" id="btn_import2">从下方文本导入</button>
     </div>
   </div>
-
 </main>
 
 <script>
+window.CATDATA = {"v":2,"source":"附件3 2026级新生选课手册","generated":"2026-09-06T14:12:21.818Z","classList":["26AI新财经实验班（会计学）","26AI新财经实验班（数字经济）","26AI新财经实验班（财政学）","26AI新财经实验班（金融学）","26人工智能1班","26人工智能2班","26人工智能实验班","26会计学1班","26会计学2班","26保险精算1班","26保险精算2班","26信息管理","26全球财经实验班","26公共管理","26前沿交叉实验班（大数据）","26前沿交叉实验班（统计学）","26劳动与社会保障金融学双学位班","26商务分析实验班","26商务英语","26国会ACCA","26国际贸易","26大数据1班","26大数据2班","26审计学","26工商管理1班","26工商管理2班","26工商管理3班","26工商管理4班","26工商统计双学位班","26投资学1班","26投资学2班","26投资数学双学位班","26数字与智能金融1班","26数字与智能金融2班","26数字前沿交叉实验班（大数据）","26数字前沿交叉实验班（数学与应用数学）","26数字前沿交叉实验班（统计学）","26数字经济实验班","26数学1班","26数学2班","26数学经济双学位班","26数量经济","26日语","26法学","26法学金融双学位班","26涉外法治实验班","26电子商务","26经济学1班","26经济学2班","26经济学3班","26经济学拔尖班","26经济数学双学位班","26统计1班","26统计2班","26统计3班","26统计学基地班","26英法复语实验班","26计算机技术","26财务管理1班","26财务管理2班","26财政学1班","26财政学2班","26财经数学实验班","26财经法治卓越班","26金融学1班","26金融学2班","26金融统计双学位班","26马克思主义理论经济学双学位"],"courses":[{"code":"100129","sn":"26100129","module":"艺术修养","name":"电视节目策划与赏析","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"100667","sn":"0857100667","module":"新生研讨课","name":"因子定价模型理论与实践","credit":"1","gender":"","category":"","teacher":"徐龙炳","times":"徐龙炳 星期三 6-7 [3-10] 科研实验大楼711（计算机网络实验室、电子商务实验室）","limit":"","note":""},{"code":"100942","sn":"19100942","module":"艺术修养","name":"乐理与欣赏","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"101070","sn":"27101070","module":"艺术修养","name":"电影音乐赏析","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"101156","sn":"0984101156","module":"思政选择性必修","name":"形势与政策","credit":"1","gender":"","category":"","teacher":"张寒宇","times":"张寒宇 星期三 11-12 [3-10] 科研实验大楼B115","limit":"","note":""},{"code":"101156","sn":"0985101156","module":"思政选择性必修","name":"形势与政策","credit":"1","gender":"","category":"","teacher":"张熙","times":"张熙 星期四 11-12 [3-10] 三教204","limit":"","note":""},{"code":"101156","sn":"1073101156","module":"思政选择性必修","name":"形势与政策","credit":"1","gender":"","category":"","teacher":"苏浩、齐宁","times":"苏浩 星期五 11-12 [7-10] 三教204 | 齐宁 星期五 11-12 [3-6] 三教204","limit":"","note":""},{"code":"101156","sn":"1074101156","module":"思政选择性必修","name":"形势与政策","credit":"1","gender":"","category":"","teacher":"王佳瑞","times":"王佳瑞 星期一 11-12 [3-10] 三教304","limit":"","note":""},{"code":"101207","sn":"22101207","module":"艺术修养","name":"影视审美","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"101262","sn":"25101262","module":"艺术修养","name":"中外戏剧艺术欣赏","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"101863","sn":"0094101863","module":"新生研讨课","name":"房地产与经济","credit":"1","gender":"","category":"","teacher":"王洪卫","times":"王洪卫 星期三 6-7 [3-10] 一教104","limit":"","note":""},{"code":"101863","sn":"0730101863","module":"新生研讨课","name":"房地产与经济","credit":"1","gender":"","category":"","teacher":"姚玲珍","times":"姚玲珍 星期二 11-12 [3-10] 教技楼329","limit":"","note":""},{"code":"101866","sn":"0866101866","module":"新生研讨课","name":"现代政治经济学热点问题","credit":"1","gender":"","category":"","teacher":"郎旭华、王琳、严金强、江楠、张沁悦、马艳","times":"郎旭华 星期三 3-4 [9] 教技楼330 | 王琳 星期三 3-4 [7][10] 教技楼330 | 严金强 星期三 3-4 双 [6-8] 教技楼330 | 江楠 星期三 3-4 [5] 教技楼330 | 张沁悦 星期三 3-4 [4] 教技楼330 | 马艳 星期三 3-4 [3] 教技楼330","limit":"","note":""},{"code":"101933","sn":"2205101933","module":"新生研讨课","name":"创业策略与创业模式","credit":"1","gender":"","category":"","teacher":"董静","times":"董静 星期三 6-7 [3-10] 三教407","limit":"","note":""},{"code":"101939","sn":"23101939","module":"艺术修养","name":"影视制作与分析","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"102251","sn":"7102251","module":"艺术修养","name":"摄影基础与图片赏析","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"102252","sn":"1102252","module":"艺术修养","name":"百年经典电影与文化中国","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"102255","sn":"6102255","module":"艺术修养","name":"当代艺术与视觉文化","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"102272","sn":"5102272","module":"艺术修养","name":"不同文化背景下的中西音乐","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"102277","sn":"2158102277","module":"新生研讨课","name":"互联网与数据应用","credit":"1","gender":"","category":"","teacher":"陈岗","times":"陈岗 星期四 3-4 [3-10] 云计算研究中心520","limit":"","note":""},{"code":"102295","sn":"0820102295","module":"新生研讨课","name":"晋商文化与管理","credit":"1","gender":"","category":"","teacher":"燕红忠","times":"燕红忠 星期三 8-9 [3-10] 教技楼315","limit":"","note":""},{"code":"102314","sn":"9102314","module":"艺术修养","name":"电视剧赏析","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"102339","sn":"0467102339","module":"新生研讨课","name":"新兴市场中的公司治理","credit":"1","gender":"","category":"","teacher":"武凯文","times":"武凯文 星期一 6-7 [3-10] 二教309","limit":"","note":""},{"code":"102339","sn":"0708102339","module":"新生研讨课","name":"新兴市场中的公司治理","credit":"1","gender":"","category":"","teacher":"武凯文","times":"武凯文 星期一 8-9 [3-10] 二教309","limit":"","note":""},{"code":"102339","sn":"0716102339","module":"新生研讨课","name":"新兴市场中的公司治理","credit":"1","gender":"","category":"","teacher":"武凯文","times":"武凯文 星期二 1-2 [3-10] 二教307","limit":"","note":""},{"code":"102339","sn":"0718102339","module":"新生研讨课","name":"新兴市场中的公司治理","credit":"1","gender":"","category":"","teacher":"武凯文","times":"武凯文 星期二 3-4 [3-10] 二教307","limit":"","note":""},{"code":"102343","sn":"0495102343","module":"新生研讨课","name":"征税的逻辑","credit":"1","gender":"","category":"","teacher":"刘小兵","times":"刘小兵 星期五 6-7 [3-10] 一教111","limit":"","note":""},{"code":"102343","sn":"0500102343","module":"新生研讨课","name":"征税的逻辑","credit":"1","gender":"","category":"","teacher":"刘小兵","times":"刘小兵 星期三 6-7 [3-10] 一教109","limit":"","note":""},{"code":"102408","sn":"8102408","module":"艺术修养","name":"巴洛克/古典/浪漫时期的宗教音乐","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"102411","sn":"16102411","module":"艺术修养","name":"中国影视作品问题研究","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"102435","sn":"0184102435","module":"新生研讨课","name":"纠纷解决","credit":"1","gender":"","category":"","teacher":"高旭","times":"高旭 星期五 3-4 [3-10] 二教211","limit":"","note":""},{"code":"102565","sn":"38102565","module":"艺术修养","name":"设计艺术创新","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"102572","sn":"43102572","module":"艺术修养","name":"音乐剧艺术","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"102592","sn":"14102592","module":"艺术修养","name":"中国传统音乐赏析","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"102677","sn":"0775102677","module":"通识选修","name":"智慧经济导论","credit":"2","gender":"","category":"","teacher":"井然哲","times":"井然哲 星期四 3-4 [3-18] 科研实验大楼B107","limit":"","note":""},{"code":"102677","sn":"1013102677","module":"通识选修","name":"智慧经济导论","credit":"2","gender":"","category":"","teacher":"井然哲","times":"井然哲 星期四 11-12 [3-18] 科研实验大楼B107","limit":"30","note":""},{"code":"102677","sn":"1022102677","module":"通识选修","name":"智慧经济导论","credit":"2","gender":"","category":"","teacher":"井然哲","times":"井然哲 星期四 13-14 [3-18] 科研实验大楼B107","limit":"30","note":""},{"code":"102698","sn":"17102698","module":"艺术修养","name":"财经与电影：资本主义在美国电影中的再现","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"102712","sn":"11102712","module":"艺术修养","name":"西方古典音乐纵览","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"102716","sn":"10102716","module":"艺术修养","name":"文物与中华文明","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"102738","sn":"12102738","module":"艺术修养","name":"音乐与绘画中的艺术审美","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"102760","sn":"0282102760","module":"新生研讨课","name":"伦理学前沿问题研究","credit":"1","gender":"","category":"","teacher":"郝云","times":"郝云 星期三 3-4 [3-10] 科研实验大楼B102","limit":"","note":""},{"code":"102763","sn":"0464102763","module":"新生研讨课","name":"商业与会计","credit":"1","gender":"","category":"","teacher":"黄俊","times":"黄俊 星期五 6-7 [3-10] 二教111","limit":"","note":""},{"code":"102763","sn":"0465102763","module":"新生研讨课","name":"商业与会计","credit":"1","gender":"","category":"","teacher":"黄俊","times":"黄俊 星期五 8-9 [3-10] 二教111","limit":"","note":""},{"code":"102763","sn":"0475102763","module":"新生研讨课","name":"商业与会计","credit":"1","gender":"","category":"","teacher":"黄俊","times":"黄俊 星期四 3-4 [3-10] 二教309","limit":"","note":""},{"code":"102763","sn":"0478102763","module":"新生研讨课","name":"商业与会计","credit":"1","gender":"","category":"","teacher":"黄俊","times":"黄俊 星期四 6-7 [3-10] 二教309","limit":"","note":""},{"code":"102764","sn":"13102764","module":"艺术修养","name":"运动与审美","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"102786","sn":"0605102786","module":"通识选修","name":"《理想国》与《政治学》对比精读","credit":"2","gender":"","category":"","teacher":"汪堂峰","times":"汪堂峰 星期五 6-7 [3-18] 科研实验大楼B106","limit":"30","note":""},{"code":"102804","sn":"2102804","module":"艺术修养","name":"西方美学经典解读","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103044","sn":"45103044","module":"艺术修养","name":"中国胡琴艺术赏析","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103045","sn":"47103045","module":"艺术修养","name":"中国美术史","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103060","sn":"36103060","module":"艺术修养","name":"昆剧赏析","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103062","sn":"35103062","module":"艺术修养","name":"京昆经典剧目赏析","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103065","sn":"44103065","module":"艺术修养","name":"中国古建筑文化与鉴赏","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103066","sn":"37103066","module":"艺术修养","name":"昆曲经典艺术赏析","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103068","sn":"39103068","module":"艺术修养","name":"书法史与书法作品鉴赏","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103069","sn":"34103069","module":"艺术修养","name":"跟随作曲家听音乐","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103070","sn":"48103070","module":"艺术修养","name":"中国书法鉴赏","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103119","sn":"30103119","module":"艺术修养","name":"话剧作品欣赏与实践课程","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103120","sn":"31103120","module":"艺术修养","name":"民乐欣赏与艺术实践课程I","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103121","sn":"32103121","module":"艺术修养","name":"舞蹈鉴赏与艺术实践课程","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103137","sn":"4103137","module":"艺术修养","name":"电影中的哲学思辨","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103144","sn":"41103144","module":"艺术修养","name":"西方美术史","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103153","sn":"50103153","module":"艺术修养","name":"走进故宫","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103291","sn":"3103291","module":"艺术修养","name":"历史与历史剧","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103357","sn":"1256103357","module":"新生研讨课","name":"中国历史经典阅读与赏析","credit":"1","gender":"","category":"","teacher":"徐国利","times":"徐国利 星期四 6-7 [3-10] 教技楼327","limit":"","note":""},{"code":"103407","sn":"0257103407","module":"新生研讨课","name":"数据时代的推断陷阱","credit":"1","gender":"","category":"","teacher":"杨楠","times":"杨楠 星期三 8-9 [3-10] 科研实验大楼B106","limit":"","note":""},{"code":"103407","sn":"0258103407","module":"新生研讨课","name":"数据时代的推断陷阱","credit":"1","gender":"","category":"","teacher":"杨楠","times":"杨楠 星期四 6-7 [3-10] 科研实验大楼B106","limit":"","note":""},{"code":"103417","sn":"42103417","module":"艺术修养","name":"艺术品鉴赏与投资","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103437","sn":"49103437","module":"艺术修养","name":"中国篆刻艺术","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103439","sn":"46103439","module":"艺术修养","name":"中国绘画鉴赏","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103442","sn":"52103442","module":"艺术修养","name":"音乐欣赏","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103561","sn":"2184103561","module":"新生研讨课","name":"中国现代爱情文学经典欣赏","credit":"1","gender":"","category":"","teacher":"徐仲佳","times":"徐仲佳 星期二 3-4 [3-10] 教技楼217","limit":"","note":""},{"code":"103561","sn":"2185103561","module":"新生研讨课","name":"中国现代爱情文学经典欣赏","credit":"1","gender":"","category":"","teacher":"徐仲佳","times":"徐仲佳 星期二 11-12 [3-10] 科研实验大楼B102","limit":"","note":""},{"code":"103629","sn":"21103629","module":"艺术修养","name":"影视跨文化传播","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103630","sn":"15103630","module":"艺术修养","name":"音乐美学与作品赏析","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"103634","sn":"40103634","module":"艺术修养","name":"西方古典建筑","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"104840","sn":"18104840","module":"艺术修养","name":"歌曲演唱与赏析","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"104845","sn":"29104845","module":"艺术修养","name":"合唱艺术欣赏与实践I","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"104852","sn":"28104852","module":"艺术修养","name":"歌剧艺术欣赏","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"104885","sn":"24104885","module":"艺术修养","name":"中国传统民族器乐名曲赏析","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"104910","sn":"33104910","module":"艺术修养","name":"西方经典音乐作品赏析","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"104911","sn":"20104911","module":"艺术修养","name":"西方美术简史","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"105187","sn":"54105187","module":"艺术修养","name":"二胡表演实践","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"105249","sn":"0673105249","module":"思政选择性必修","name":"中华人民共和国史","credit":"1","gender":"","category":"","teacher":"姜国敏、李亚丁","times":"姜国敏 星期五 3-4 [7-9] 三教602 | 李亚丁 星期五 3-4 [3-6][10] 三教602","limit":"","note":""},{"code":"105249","sn":"0794105249","module":"思政选择性必修","name":"中华人民共和国史","credit":"1","gender":"","category":"","teacher":"李亚丁、姜国敏","times":"李亚丁 星期五 3-4 [7-9] 三教604 | 姜国敏 星期五 3-4 [3-6][10] 三教604","limit":"","note":""},{"code":"105250","sn":"0458105250","module":"思政选择性必修","name":"改革开放史","credit":"1","gender":"","category":"","teacher":"卞梁","times":"卞梁 星期二 3-4 [3-10] 三教302","limit":"","note":""},{"code":"105250","sn":"0459105250","module":"思政选择性必修","name":"改革开放史","credit":"1","gender":"","category":"","teacher":"卞梁","times":"卞梁 星期二 11-12 [3-10] 三教202","limit":"","note":""},{"code":"105254","sn":"0633105254","module":"思政选择性必修","name":"社会主义发展史","credit":"1","gender":"","category":"","teacher":"张孟雯","times":"张孟雯 星期二 11-12 双 [4-10] 在线教学（直播/慕课） | 张孟雯 星期二 11-12 单 [3-9] 三教302","limit":"","note":""},{"code":"105254","sn":"0670105254","module":"思政选择性必修","name":"社会主义发展史","credit":"1","gender":"","category":"","teacher":"李昊晟","times":"李昊晟 星期四 3-4 双 [4-10] 在线教学（直播/慕课） | 李昊晟 星期四 3-4 单 [3-9] 三教304","limit":"","note":""},{"code":"105340","sn":"59105340","module":"艺术修养","name":"中国舞蹈创编","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"105341","sn":"58105341","module":"艺术修养","name":"重唱艺术表演","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"105342","sn":"57105342","module":"艺术修养","name":"电脑音乐制作","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"105367","sn":"0902105367","module":"体育","name":"体育I（篮球）","credit":"1","gender":"男","category":"","teacher":"谢卉","times":"谢卉 星期一 3-4 [3-18] 篮球场（馆内)","limit":"","note":"","cls":["26大数据2班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26统计学基地班","26涉外法治实验班","26统计2班","26统计3班","26统计1班"]},{"code":"105367","sn":"0905105367","module":"体育","name":"体育I（篮球）","credit":"1","gender":"男","category":"","teacher":"谢卉","times":"谢卉 星期二 3-4 [3-18] 篮球场1（馆外)","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班"]},{"code":"105367","sn":"0907105367","module":"体育","name":"体育I（篮球）","credit":"1","gender":"男","category":"","teacher":"谢卉","times":"谢卉 星期五 3-4 [3-18] 篮球场（馆内)","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班","26数量经济","26经济学3班","26英法复语实验班","26经济数学双学位班","26日语","26商务英语","26经济学2班","26财经数学实验班","26经济学1班","26数学2班","26数学经济双学位班","26数学1班","26人工智能实验班","26人工智能1班","26人工智能2班","26计算机技术"]},{"code":"105367","sn":"0908105367","module":"体育","name":"体育I（篮球）","credit":"1","gender":"男","category":"","teacher":"安舒扬","times":"安舒扬 星期三 3-4 [3-18] 篮球场（馆内)","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26经济学拔尖班","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26数字前沿交叉实验班（统计学）","26数字前沿交叉实验班（大数据）","26数字前沿交叉实验班（数学与应用数学）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26劳动与社会保障金融学双学位班","26金融学2班","26保险精算1班","26保险精算2班","26公共管理"]},{"code":"105367","sn":"0909105367","module":"体育","name":"体育I（篮球）","credit":"1","gender":"男","category":"","teacher":"安舒扬","times":"安舒扬 星期四 3-4 [3-18] 篮球场（馆内)","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26马克思主义理论经济学双学位","26审计学","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26财务管理2班"]},{"code":"105367","sn":"0911105367","module":"体育","name":"体育I（篮球）","credit":"1","gender":"男","category":"","teacher":"雷正方","times":"雷正方 星期四 3-4 [3-18] 篮球场1（馆外)","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26马克思主义理论经济学双学位","26审计学","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26财务管理2班"]},{"code":"105368","sn":"0913105368","module":"体育","name":"体育I（排球）","credit":"1","gender":"混","category":"","teacher":"刘珺","times":"刘珺 星期一 3-4 [3-18] 武川排球场","limit":"","note":"","cls":["26大数据2班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26统计学基地班","26涉外法治实验班","26统计2班","26统计3班","26统计1班"]},{"code":"105368","sn":"0914105368","module":"体育","name":"体育I（排球）","credit":"1","gender":"混","category":"","teacher":"刘珺","times":"刘珺 星期五 3-4 [3-18] 武川排球场","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班","26数量经济","26经济学3班","26英法复语实验班","26经济数学双学位班","26日语","26商务英语","26经济学2班","26财经数学实验班","26经济学1班","26数学2班","26数学经济双学位班","26数学1班","26人工智能实验班","26人工智能1班","26人工智能2班","26计算机技术"]},{"code":"105368","sn":"0915105368","module":"体育","name":"体育I（排球）","credit":"1","gender":"混","category":"","teacher":"陈瑜","times":"陈瑜 星期三 3-4 [3-18] 武川排球场","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26经济学拔尖班","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26数字前沿交叉实验班（统计学）","26数字前沿交叉实验班（大数据）","26数字前沿交叉实验班（数学与应用数学）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26劳动与社会保障金融学双学位班","26金融学2班","26保险精算1班","26保险精算2班","26公共管理"]},{"code":"105369","sn":"1053105369","module":"体育","name":"体育I（足球）","credit":"1","gender":"男","category":"","teacher":"李阳","times":"李阳 星期一 3-4 [3-18] 武东田径场","limit":"","note":"","cls":["26大数据2班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26统计学基地班","26涉外法治实验班","26统计2班","26统计3班","26统计1班"]},{"code":"105369","sn":"1058105369","module":"体育","name":"体育I（足球）","credit":"1","gender":"男","category":"","teacher":"李阳","times":"李阳 星期五 3-4 [3-18] 武东田径场","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班","26数量经济","26经济学3班","26英法复语实验班","26经济数学双学位班","26日语","26商务英语","26经济学2班","26财经数学实验班","26经济学1班","26数学2班","26数学经济双学位班","26数学1班","26人工智能实验班","26人工智能1班","26人工智能2班","26计算机技术"]},{"code":"105369","sn":"1059105369","module":"体育","name":"体育I（足球）","credit":"1","gender":"男","category":"","teacher":"崔嵬","times":"崔嵬 星期三 3-4 [3-18] 武东田径场","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26经济学拔尖班","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26数字前沿交叉实验班（统计学）","26数字前沿交叉实验班（大数据）","26数字前沿交叉实验班（数学与应用数学）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26劳动与社会保障金融学双学位班","26金融学2班","26保险精算1班","26保险精算2班","26公共管理"]},{"code":"105369","sn":"1061105369","module":"体育","name":"体育I（足球）","credit":"1","gender":"男","category":"","teacher":"崔嵬","times":"崔嵬 星期四 3-4 [3-18] 武东田径场","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26马克思主义理论经济学双学位","26审计学","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26财务管理2班"]},{"code":"105370","sn":"0957105370","module":"体育","name":"体育I（乒乓）","credit":"1","gender":"女","category":"","teacher":"王苑苑","times":"王苑苑 星期一 3-4 [3-18] 乒乓球房（新体育馆）","limit":"","note":"","cls":["26大数据2班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26统计学基地班","26涉外法治实验班","26统计2班","26统计3班","26统计1班"]},{"code":"105370","sn":"0959105370","module":"体育","name":"体育I（乒乓）","credit":"1","gender":"女","category":"","teacher":"王苑苑","times":"王苑苑 星期四 3-4 [3-18] 武川游泳馆","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26马克思主义理论经济学双学位","26审计学","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26财务管理2班"]},{"code":"105370","sn":"0961105370","module":"体育","name":"体育I（乒乓）","credit":"1","gender":"男","category":"","teacher":"王苑苑","times":"王苑苑 星期五 3-4 [3-18] 武川游泳馆","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班","26数量经济","26经济学3班","26英法复语实验班","26经济数学双学位班","26日语","26商务英语","26经济学2班","26财经数学实验班","26经济学1班","26数学2班","26数学经济双学位班","26数学1班","26人工智能实验班","26人工智能1班","26人工智能2班","26计算机技术"]},{"code":"105370","sn":"0966105370","module":"体育","name":"体育I（乒乓）","credit":"1","gender":"女","category":"","teacher":"王新东","times":"王新东 星期四 3-4 [3-18] 乒乓球房（新体育馆）","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26马克思主义理论经济学双学位","26审计学","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26财务管理2班"]},{"code":"105370","sn":"0968105370","module":"体育","name":"体育I（乒乓）","credit":"1","gender":"男","category":"","teacher":"杨啸","times":"杨啸 星期一 3-4 [3-18] 武川游泳馆","limit":"","note":"","cls":["26大数据2班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26统计学基地班","26涉外法治实验班","26统计2班","26统计3班","26统计1班"]},{"code":"105370","sn":"0971105370","module":"体育","name":"体育I（乒乓）","credit":"1","gender":"女","category":"","teacher":"杨啸","times":"杨啸 星期五 3-4 [3-18] 乒乓球房（新体育馆）","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班","26数量经济","26经济学3班","26英法复语实验班","26经济数学双学位班","26日语","26商务英语","26经济学2班","26财经数学实验班","26经济学1班","26数学2班","26数学经济双学位班","26数学1班","26人工智能实验班","26人工智能1班","26人工智能2班","26计算机技术"]},{"code":"105370","sn":"0973105370","module":"体育","name":"体育I（乒乓）","credit":"1","gender":"男","category":"","teacher":"杨啸","times":"杨啸 星期三 3-4 [3-18] 武川游泳馆","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26经济学拔尖班","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26数字前沿交叉实验班（统计学）","26数字前沿交叉实验班（大数据）","26数字前沿交叉实验班（数学与应用数学）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26劳动与社会保障金融学双学位班","26金融学2班","26保险精算1班","26保险精算2班","26公共管理"]},{"code":"105370","sn":"0974105370","module":"体育","name":"体育I（乒乓）","credit":"1","gender":"女","category":"","teacher":"黄文奇","times":"黄文奇 星期三 3-4 [3-18] 乒乓球房（新体育馆）","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26经济学拔尖班","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26数字前沿交叉实验班（统计学）","26数字前沿交叉实验班（大数据）","26数字前沿交叉实验班（数学与应用数学）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26劳动与社会保障金融学双学位班","26金融学2班","26保险精算1班","26保险精算2班","26公共管理"]},{"code":"105371","sn":"1028105371","module":"体育","name":"体育I（羽毛球）","credit":"1","gender":"女","category":"","teacher":"徐燕军","times":"徐燕军 星期一 3-4 [3-18] 武川羽毛球馆","limit":"","note":"","cls":["26大数据2班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26统计学基地班","26涉外法治实验班","26统计2班","26统计3班","26统计1班"]},{"code":"105371","sn":"1029105371","module":"体育","name":"体育I（羽毛球）","credit":"1","gender":"男","category":"","teacher":"徐燕军","times":"徐燕军 星期三 3-4 [3-18] 武川羽毛球馆","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26经济学拔尖班","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26数字前沿交叉实验班（统计学）","26数字前沿交叉实验班（大数据）","26数字前沿交叉实验班（数学与应用数学）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26劳动与社会保障金融学双学位班","26金融学2班","26保险精算1班","26保险精算2班","26公共管理"]},{"code":"105371","sn":"1034105371","module":"体育","name":"体育I（羽毛球）","credit":"1","gender":"女","category":"","teacher":"陈简妮","times":"陈简妮 星期四 3-4 [3-18] 武川游泳馆","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26马克思主义理论经济学双学位","26审计学","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26财务管理2班"]},{"code":"105371","sn":"1041105371","module":"体育","name":"体育I（羽毛球）","credit":"1","gender":"男","category":"","teacher":"陈简妮","times":"陈简妮 星期五 3-4 [3-18] 武川游泳馆","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班","26数量经济","26经济学3班","26英法复语实验班","26经济数学双学位班","26日语","26商务英语","26经济学2班","26财经数学实验班","26经济学1班","26数学2班","26数学经济双学位班","26数学1班","26人工智能实验班","26人工智能1班","26人工智能2班","26计算机技术"]},{"code":"105371","sn":"1043105371","module":"体育","name":"体育I（羽毛球）","credit":"1","gender":"男","category":"","teacher":"陈简妮","times":"陈简妮 星期二 3-4 [3-18] 武川游泳馆","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班"]},{"code":"105372","sn":"1005105372","module":"体育","name":"体育I（网球）","credit":"1","gender":"女","category":"","teacher":"张卓","times":"张卓 星期四 3-4 [3-18] 国定网球场","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26马克思主义理论经济学双学位","26审计学","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26财务管理2班"]},{"code":"105372","sn":"1006105372","module":"体育","name":"体育I（网球）","credit":"1","gender":"混","category":"","teacher":"章凌凌","times":"章凌凌 星期一 3-4 [3-18] 国定网球场","limit":"","note":"","cls":["26大数据2班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26统计学基地班","26涉外法治实验班","26统计2班","26统计3班","26统计1班"]},{"code":"105372","sn":"1008105372","module":"体育","name":"体育I（网球）","credit":"1","gender":"混","category":"","teacher":"雷正方","times":"雷正方 星期五 3-4 [3-18] 国定网球场","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班","26数量经济","26经济学3班","26英法复语实验班","26经济数学双学位班","26日语","26商务英语","26经济学2班","26财经数学实验班","26经济学1班","26数学2班","26数学经济双学位班","26数学1班","26人工智能实验班","26人工智能1班","26人工智能2班","26计算机技术"]},{"code":"105373","sn":"0837105373","module":"体育","name":"体育I(健美操）","credit":"1","gender":"女","category":"","teacher":"张燕","times":"张燕 星期三 3-4 [3-18] 小操房（清真食堂二楼）","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26经济学拔尖班","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26数字前沿交叉实验班（统计学）","26数字前沿交叉实验班（大数据）","26数字前沿交叉实验班（数学与应用数学）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26劳动与社会保障金融学双学位班","26金融学2班","26保险精算1班","26保险精算2班","26公共管理"]},{"code":"105373","sn":"0841105373","module":"体育","name":"体育I(健美操）","credit":"1","gender":"女","category":"","teacher":"刘宣辰","times":"刘宣辰 星期一 3-4 [3-18] 小操房（清真食堂二楼）","limit":"","note":"","cls":["26大数据2班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26统计学基地班","26涉外法治实验班","26统计2班","26统计3班","26统计1班"]},{"code":"105374","sn":"0875105374","module":"体育","name":"体育I（啦啦操）","credit":"1","gender":"女","category":"","teacher":"王珉","times":"王珉 星期一 3-4 [3-18] 大操房（清真食堂二楼）","limit":"","note":"","cls":["26大数据2班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26统计学基地班","26涉外法治实验班","26统计2班","26统计3班","26统计1班"]},{"code":"105374","sn":"0876105374","module":"体育","name":"体育I（啦啦操）","credit":"1","gender":"女","category":"","teacher":"王珉","times":"王珉 星期三 3-4 [3-18] 大操房（清真食堂二楼）","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26经济学拔尖班","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26数字前沿交叉实验班（统计学）","26数字前沿交叉实验班（大数据）","26数字前沿交叉实验班（数学与应用数学）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26劳动与社会保障金融学双学位班","26金融学2班","26保险精算1班","26保险精算2班","26公共管理"]},{"code":"105374","sn":"0883105374","module":"体育","name":"体育I（啦啦操）","credit":"1","gender":"女","category":"","teacher":"王珉","times":"王珉 星期四 3-4 [3-18] 小操房（清真食堂二楼）","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26马克思主义理论经济学双学位","26审计学","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26财务管理2班"]},{"code":"105374","sn":"0892105374","module":"体育","name":"体育I（啦啦操）","credit":"1","gender":"女","category":"","teacher":"文红为","times":"文红为 星期二 3-4 [3-18] 小操房（清真食堂二楼）","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班"]},{"code":"105374","sn":"0894105374","module":"体育","name":"体育I（啦啦操）","credit":"1","gender":"女","category":"","teacher":"文红为","times":"文红为 星期四 3-4 [3-18] 大操房（清真食堂二楼）","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26马克思主义理论经济学双学位","26审计学","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26财务管理2班"]},{"code":"105374","sn":"0901105374","module":"体育","name":"体育I（啦啦操）","credit":"1","gender":"女","category":"","teacher":"刘宣辰","times":"刘宣辰 星期五 3-4 [3-18] 大操房（清真食堂二楼）","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班","26数量经济","26经济学3班","26英法复语实验班","26经济数学双学位班","26日语","26商务英语","26经济学2班","26财经数学实验班","26经济学1班","26数学2班","26数学经济双学位班","26数学1班","26人工智能实验班","26人工智能1班","26人工智能2班","26计算机技术"]},{"code":"105375","sn":"0988105375","module":"体育","name":"体育I（体育舞蹈）","credit":"1","gender":"女","category":"","teacher":"汪琪","times":"汪琪 星期二 3-4 [3-18] 大操房（清真食堂二楼）","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班"]},{"code":"105375","sn":"0990105375","module":"体育","name":"体育I（体育舞蹈）","credit":"1","gender":"","category":"","teacher":"汪琪","times":"汪琪 星期四 3-4 [3-18] 乒乓球房（清真食堂二楼）","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26马克思主义理论经济学双学位","26审计学","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26财务管理2班"]},{"code":"105375","sn":"0994105375","module":"体育","name":"体育I（体育舞蹈）","credit":"1","gender":"女","category":"","teacher":"汪琪","times":"汪琪 星期五 3-4 [3-18] 乒乓球房（清真食堂二楼）","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班","26数量经济","26经济学3班","26英法复语实验班","26经济数学双学位班","26日语","26商务英语","26经济学2班","26财经数学实验班","26经济学1班","26数学2班","26数学经济双学位班","26数学1班","26人工智能实验班","26人工智能1班","26人工智能2班","26计算机技术"]},{"code":"105377","sn":"1012105377","module":"体育","name":"体育I（武术）","credit":"1","gender":"女","category":"","teacher":"文红为","times":"文红为 星期三 3-4 [3-18] 武川游泳馆","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26经济学拔尖班","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26数字前沿交叉实验班（统计学）","26数字前沿交叉实验班（大数据）","26数字前沿交叉实验班（数学与应用数学）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26劳动与社会保障金融学双学位班","26金融学2班","26保险精算1班","26保险精算2班","26公共管理"]},{"code":"105377","sn":"1014105377","module":"体育","name":"体育I（武术）","credit":"1","gender":"混","category":"","teacher":"辛晨曦","times":"辛晨曦 星期一 3-4 [3-18] 武川游泳馆","limit":"","note":"","cls":["26大数据2班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26统计学基地班","26涉外法治实验班","26统计2班","26统计3班","26统计1班"]},{"code":"105379","sn":"0983105379","module":"体育","name":"体育I（跆拳道）","credit":"1","gender":"混","category":"","teacher":"尹智猛","times":"尹智猛 星期三 3-4 [3-18] 国定体育馆112","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26经济学拔尖班","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26数字前沿交叉实验班（统计学）","26数字前沿交叉实验班（大数据）","26数字前沿交叉实验班（数学与应用数学）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26劳动与社会保障金融学双学位班","26金融学2班","26保险精算1班","26保险精算2班","26公共管理"]},{"code":"105379","sn":"0987105379","module":"体育","name":"体育I（跆拳道）","credit":"1","gender":"","category":"","teacher":"尹智猛","times":"尹智猛 星期四 3-4 [3-18] 国定体育馆112","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26马克思主义理论经济学双学位","26审计学","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26财务管理2班"]},{"code":"105380","sn":"0996105380","module":"体育","name":"体育I（跳绳）","credit":"1","gender":"女","category":"","teacher":"刘冬奥","times":"刘冬奥 星期三 3-4 [3-18] 体测中心","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26经济学拔尖班","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26数字前沿交叉实验班（统计学）","26数字前沿交叉实验班（大数据）","26数字前沿交叉实验班（数学与应用数学）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26劳动与社会保障金融学双学位班","26金融学2班","26保险精算1班","26保险精算2班","26公共管理"]},{"code":"105380","sn":"0997105380","module":"体育","name":"体育I（跳绳）","credit":"1","gender":"女","category":"","teacher":"刘冬奥","times":"刘冬奥 星期四 3-4 [3-18] 体测中心","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26马克思主义理论经济学双学位","26审计学","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26财务管理2班"]},{"code":"105380","sn":"0998105380","module":"体育","name":"体育I（跳绳）","credit":"1","gender":"女","category":"","teacher":"刘冬奥","times":"刘冬奥 星期五 3-4 [3-18] 体测中心","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班","26数量经济","26经济学3班","26英法复语实验班","26经济数学双学位班","26日语","26商务英语","26经济学2班","26财经数学实验班","26经济学1班","26数学2班","26数学经济双学位班","26数学1班","26人工智能实验班","26人工智能1班","26人工智能2班","26计算机技术"]},{"code":"105380","sn":"0999105380","module":"体育","name":"体育I（跳绳）","credit":"1","gender":"混","category":"","teacher":"蔡颖敏","times":"蔡颖敏 星期三 3-4 [3-18] 国定体育馆107（形体房）","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26经济学拔尖班","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26数字前沿交叉实验班（统计学）","26数字前沿交叉实验班（大数据）","26数字前沿交叉实验班（数学与应用数学）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26劳动与社会保障金融学双学位班","26金融学2班","26保险精算1班","26保险精算2班","26公共管理"]},{"code":"105380","sn":"1002105380","module":"体育","name":"体育I（跳绳）","credit":"1","gender":"混","category":"","teacher":"曹雪原","times":"曹雪原 星期二 3-4 [3-18] 体测中心","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班"]},{"code":"105380","sn":"1003105380","module":"体育","name":"体育I（跳绳）","credit":"1","gender":"混","category":"","teacher":"曹雪原","times":"曹雪原 星期五 3-4 [3-18] 国定体育馆107（形体房）","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班","26数量经济","26经济学3班","26英法复语实验班","26经济数学双学位班","26日语","26商务英语","26经济学2班","26财经数学实验班","26经济学1班","26数学2班","26数学经济双学位班","26数学1班","26人工智能实验班","26人工智能1班","26人工智能2班","26计算机技术"]},{"code":"105381","sn":"0788105381","module":"体育","name":"体育I（击剑）","credit":"1","gender":"混","category":"","teacher":"徐敏","times":"徐敏 星期一 3-4 [3-18] 乒乓球房（清真食堂二楼）","limit":"","note":"","cls":["26大数据2班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26统计学基地班","26涉外法治实验班","26统计2班","26统计3班","26统计1班"]},{"code":"105381","sn":"0807105381","module":"体育","name":"体育I（击剑）","credit":"1","gender":"混","category":"","teacher":"徐敏","times":"徐敏 星期二 3-4 [3-18] 乒乓球房（清真食堂二楼）","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班"]},{"code":"105381","sn":"0814105381","module":"体育","name":"体育I（击剑）","credit":"1","gender":"混","category":"","teacher":"徐敏","times":"徐敏 星期三 3-4 [3-18] 乒乓球房（清真食堂二楼）","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26经济学拔尖班","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26数字前沿交叉实验班（统计学）","26数字前沿交叉实验班（大数据）","26数字前沿交叉实验班（数学与应用数学）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26劳动与社会保障金融学双学位班","26金融学2班","26保险精算1班","26保险精算2班","26公共管理"]},{"code":"105382","sn":"0663105382","module":"体育","name":"体育I（游泳）","credit":"1","gender":"男","category":"","teacher":"董敏凯","times":"董敏凯 星期一 3-4 [3-18] 武川游泳馆","limit":"","note":"","cls":["26大数据2班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26统计学基地班","26涉外法治实验班","26统计2班","26统计3班","26统计1班"]},{"code":"105382","sn":"0665105382","module":"体育","name":"体育I（游泳）","credit":"1","gender":"女","category":"","teacher":"吕季东","times":"吕季东 星期三 3-4 [3-18] 武川游泳馆","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26经济学拔尖班","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26数字前沿交叉实验班（统计学）","26数字前沿交叉实验班（大数据）","26数字前沿交叉实验班（数学与应用数学）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26劳动与社会保障金融学双学位班","26金融学2班","26保险精算1班","26保险精算2班","26公共管理"]},{"code":"105382","sn":"0672105382","module":"体育","name":"体育I（游泳）","credit":"1","gender":"男","category":"","teacher":"蔡颖敏","times":"蔡颖敏 星期四 3-4 [3-18] 武川游泳馆","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26马克思主义理论经济学双学位","26审计学","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26财务管理2班"]},{"code":"105382","sn":"0679105382","module":"体育","name":"体育I（游泳）","credit":"1","gender":"女","category":"","teacher":"张燕","times":"张燕 星期二 3-4 [3-18] 武川游泳馆","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班"]},{"code":"105382","sn":"0685105382","module":"体育","name":"体育I（游泳）","credit":"1","gender":"女","category":"","teacher":"张燕","times":"张燕 星期四 3-4 [3-18] 武川游泳馆","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26马克思主义理论经济学双学位","26审计学","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26财务管理2班"]},{"code":"105382","sn":"0691105382","module":"体育","name":"体育I（游泳）","credit":"1","gender":"男","category":"","teacher":"王新东","times":"王新东 星期三 3-4 [3-18] 武川游泳馆","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26经济学拔尖班","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26数字前沿交叉实验班（统计学）","26数字前沿交叉实验班（大数据）","26数字前沿交叉实验班（数学与应用数学）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26劳动与社会保障金融学双学位班","26金融学2班","26保险精算1班","26保险精算2班","26公共管理"]},{"code":"105382","sn":"0701105382","module":"体育","name":"体育I（游泳）","credit":"1","gender":"女","category":"","teacher":"顾德平","times":"顾德平 星期一 3-4 [3-18] 武川游泳馆","limit":"","note":"","cls":["26大数据2班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26统计学基地班","26涉外法治实验班","26统计2班","26统计3班","26统计1班"]},{"code":"105382","sn":"0723105382","module":"体育","name":"体育I（游泳）","credit":"1","gender":"男","category":"","teacher":"顾德平","times":"顾德平 星期二 3-4 [3-18] 武川游泳馆","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班"]},{"code":"105382","sn":"0731105382","module":"体育","name":"体育I（游泳）","credit":"1","gender":"男","category":"","teacher":"顾德平","times":"顾德平 星期五 3-4 [3-18] 武川游泳馆","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班","26数量经济","26经济学3班","26英法复语实验班","26经济数学双学位班","26日语","26商务英语","26经济学2班","26财经数学实验班","26经济学1班","26数学2班","26数学经济双学位班","26数学1班","26人工智能实验班","26人工智能1班","26人工智能2班","26计算机技术"]},{"code":"105382","sn":"0736105382","module":"体育","name":"体育I（游泳）","credit":"1","gender":"女","category":"","teacher":"崔嵬","times":"崔嵬 星期五 3-4 [3-18] 武川游泳馆","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班","26数量经济","26经济学3班","26英法复语实验班","26经济数学双学位班","26日语","26商务英语","26经济学2班","26财经数学实验班","26经济学1班","26数学2班","26数学经济双学位班","26数学1班","26人工智能实验班","26人工智能1班","26人工智能2班","26计算机技术"]},{"code":"105384","sn":"1015105384","module":"体育","name":"体育I（形体）","credit":"1","gender":"女","category":"","teacher":"路瑶","times":"路瑶 星期一 3-4 [3-18] 国定体育馆107（形体房）","limit":"","note":"","cls":["26大数据2班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26统计学基地班","26涉外法治实验班","26统计2班","26统计3班","26统计1班"]},{"code":"105384","sn":"1017105384","module":"体育","name":"体育I（形体）","credit":"1","gender":"女","category":"","teacher":"路瑶","times":"路瑶 星期二 3-4 [3-18] 国定体育馆107（形体房）","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班"]},{"code":"105384","sn":"1020105384","module":"体育","name":"体育I（形体）","credit":"1","gender":"女","category":"","teacher":"路瑶","times":"路瑶 星期四 3-4 [3-18] 国定体育馆107（形体房）","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26马克思主义理论经济学双学位","26审计学","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26财务管理2班"]},{"code":"105529","sn":"61105529","module":"艺术修养","name":"室内乐团排练","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"105531","sn":"55105531","module":"艺术修养","name":"扬琴表演实践","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"105532","sn":"56105532","module":"艺术修养","name":"古典吉他启蒙艺术修养课程清单（截至年月）","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"105533","sn":"53105533","module":"艺术修养","name":"竹笛表演实践","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"105534","sn":"60105534","module":"艺术修养","name":"戏剧文学创编","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"105538","sn":"62105538","module":"艺术修养","name":"商业视频创作","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"105539","sn":"63105539","module":"艺术修养","name":"舞蹈艺术欣赏","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"105859","sn":"1669105859","module":"通识选修","name":"启蒙时代的文化与哲学","credit":"2","gender":"","category":"","teacher":"李育书","times":"李育书 星期三 8-9 [3-18] 三教303","limit":"50","note":""},{"code":"105862","sn":"64105862","module":"艺术修养","name":"中国书法经典赏析与临摹","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"105978","sn":"66105978","module":"艺术修养","name":"研究、艺术与创新思维","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"106001","sn":"0129106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期五 8-9 [9-11] 在线教学（直播/慕课） | 李盈懿 星期五 8-9 [8] AED心肺复苏培训室 | 李盈懿 星期五 8-9 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"0166106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期五 8-9 [9] AED心肺复苏培训室 | 李盈懿 星期五 8-9 [8][10-11] 在线教学（直播/慕课） | 李盈懿 星期五 8-9 [3-7][12-13] 国定路梯三卫生保健","limit":"","note":""},{"code":"106001","sn":"0196106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期五 8-9 [10] AED心肺复苏培训室 | 李盈懿 星期五 8-9 [8-9][11] 在线教学（直播/慕课） | 李盈懿 星期五 8-9 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"0240106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期二 1-2 [9-11] 在线教学（直播/慕课） | 李盈懿 星期二 1-2 [8] AED心肺复苏培训室 | 李盈懿 星期二 1-2 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"0243106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期二 1-2 [9] AED心肺复苏培训室 | 李盈懿 星期二 1-2 [8][10-11] 在线教学（直播/慕课） | 李盈懿 星期二 1-2 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"0311106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期二 1-2 [10] AED心肺复苏培训室 | 李盈懿 星期二 1-2 [8-9][11] 在线教学（直播/慕课） | 李盈懿 星期二 1-2 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"0324106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期一 6-7 [9-11] 在线教学（直播/慕课） | 李盈懿 星期一 6-7 [8] AED心肺复苏培训室 | 李盈懿 星期一 6-7 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"0336106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期一 6-7 [9] AED心肺复苏培训室 | 李盈懿 星期一 6-7 [8][10-11] 在线教学（直播/慕课） | 李盈懿 星期一 6-7 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"0347106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期一 6-7 [10] AED心肺复苏培训室 | 李盈懿 星期一 6-7 [8-9][11] 在线教学（直播/慕课） | 李盈懿 星期一 6-7 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"0360106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期五 3-4 [9-11] 在线教学（直播/慕课） | 李盈懿 星期五 3-4 [8] AED心肺复苏培训室 | 李盈懿 星期五 3-4 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"0501106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期五 3-4 [9] AED心肺复苏培训室 | 李盈懿 星期五 3-4 [8][10-11] 在线教学（直播/慕课） | 李盈懿 星期五 3-4 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"0529106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期五 3-4 [10] AED心肺复苏培训室 | 李盈懿 星期五 3-4 [8-9][11] 在线教学（直播/慕课） | 李盈懿 星期五 3-4 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"0614106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期一 8-9 [9-11] 在线教学（直播/慕课） | 李盈懿 星期一 8-9 [8] AED心肺复苏培训室 | 李盈懿 星期一 8-9 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"0677106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期五 6-7 [9-11] 在线教学（直播/慕课） | 李盈懿 星期五 6-7 [8] AED心肺复苏培训室 | 李盈懿 星期五 6-7 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"0734106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期五 6-7 [9] AED心肺复苏培训室 | 李盈懿 星期五 6-7 [8][10-11] 在线教学（直播/慕课） | 李盈懿 星期五 6-7 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"0752106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期五 6-7 [10] AED心肺复苏培训室 | 李盈懿 星期五 6-7 [8-9][11] 在线教学（直播/慕课） | 李盈懿 星期五 6-7 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"0812106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期一 8-9 [9] AED心肺复苏培训室 | 李盈懿 星期一 8-9 [8][10-11] 在线教学（直播/慕课） | 李盈懿 星期一 8-9 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"0813106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期一 8-9 [10] AED心肺复苏培训室 | 李盈懿 星期一 8-9 [8-9][11] 在线教学（直播/慕课） | 李盈懿 星期一 8-9 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"0815106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期一 8-9 [11] AED心肺复苏培训室 | 李盈懿 星期一 8-9 [8-10] 在线教学（直播/慕课） | 李盈懿 星期一 8-9 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"0816106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期二 3-4 [9-11] 在线教学（直播/慕课） | 李盈懿 星期二 3-4 [8] AED心肺复苏培训室 | 李盈懿 星期二 3-4 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"0817106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期二 3-4 [9] AED心肺复苏培训室 | 李盈懿 星期二 3-4 [8][10-11] 在线教学（直播/慕课） | 李盈懿 星期二 3-4 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"0818106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期二 3-4 [10] AED心肺复苏培训室 | 李盈懿 星期二 3-4 [8-9][11] 在线教学（直播/慕课） | 李盈懿 星期二 3-4 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"1098106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期五 6-7 [11] AED心肺复苏培训室 | 李盈懿 星期五 6-7 [8-10] 在线教学（直播/慕课） | 李盈懿 星期五 6-7 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"1251106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期五 3-4 [11] AED心肺复苏培训室 | 李盈懿 星期五 3-4 [8-10] 在线教学（直播/慕课） | 李盈懿 星期五 3-4 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"1435106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期二 3-4 [11] AED心肺复苏培训室 | 李盈懿 星期二 3-4 [8-10] 在线教学（直播/慕课） | 李盈懿 星期二 3-4 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"1801106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期五 8-9 [11] AED心肺复苏培训室 | 李盈懿 星期五 8-9 [8-10] 在线教学（直播/慕课） | 李盈懿 星期五 8-9 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"1987106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期二 1-2 [11] AED心肺复苏培训室 | 李盈懿 星期二 1-2 [8-10] 在线教学（直播/慕课） | 李盈懿 星期二 1-2 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106001","sn":"2001106001","module":"卫生保健","name":"卫生保健","credit":"1","gender":"","category":"","teacher":"李盈懿","times":"李盈懿 星期一 6-7 [11] AED心肺复苏培训室 | 李盈懿 星期一 6-7 [8-10] 在线教学（直播/慕课） | 李盈懿 星期一 6-7 [3-7][12-13] 国定路梯三","limit":"","note":""},{"code":"106023","sn":"0922106023","module":"通识选修","name":"大学生职业发展与实践指导","credit":"2","gender":"","category":"","teacher":"王越、刘柳","times":"王越 星期五 8-9 [12-18] 科研实验大楼B102 | 刘柳 星期五 8-9 [3-11] 科研实验大楼B102","limit":"30","note":""},{"code":"106286","sn":"2041106286","module":"新生研讨课","name":"中西文明对话","credit":"1","gender":"","category":"","teacher":"谭琼琳","times":"谭琼琳 星期二 1-2 [3-10] 二教205","limit":"","note":""},{"code":"106286","sn":"2058106286","module":"新生研讨课","name":"中西文明对话","credit":"1","gender":"","category":"","teacher":"谭琼琳","times":"谭琼琳 星期二 3-4 [3-10] 二教205","limit":"","note":""},{"code":"106315","sn":"2068106315","module":"新生研讨课","name":"日本文化八讲","credit":"1","gender":"","category":"","teacher":"李文平、张海蓉、杨文瑜、吕雷宁、米丽英、穆欣、张厚泉","times":"李文平 星期三 6-7 [10] 二教111 | 张海蓉 星期三 6-7 [9] 二教111 | 杨文瑜 星期三 6-7 [8] 二教111 | 吕雷宁 星期三 6-7 [6-7] 二教111 | 米丽英 星期三 6-7 [5] 二教111 | 穆欣 星期三 6-7 [4] 二教111 | 张厚泉 星期三 6-7 [3] 二教111","limit":"","note":""},{"code":"106325","sn":"0295106325","module":"思政选择性必修","name":"习近平生态文明思想概论","credit":"1","gender":"","category":"","teacher":"刘洋、任瑞敏","times":"刘洋 星期四 3-4 [7-10] 科研实验大楼B115 | 任瑞敏 星期四 3-4 [3-6] 科研实验大楼B115","limit":"","note":""},{"code":"106326","sn":"0976106326","module":"思政选择性必修","name":"习近平法治思想概论","credit":"1","gender":"","category":"","teacher":"方令权、刘明","times":"方令权 星期五 11-12 [7-10] 科研实验大楼B104 | 刘明 星期五 11-12 [3-6] 科研实验大楼B104","limit":"","note":""},{"code":"106327","sn":"0296106327","module":"思政选择性必修","name":"习近平关于教育重要论述研究","credit":"1","gender":"","category":"","teacher":"李敏","times":"李敏 星期五 3-4 [3-10] 三教304","limit":"","note":""},{"code":"106348","sn":"0074106348","module":"新生研讨课","name":"文艺复兴概论","credit":"1","gender":"","category":"","teacher":"汪丽红","times":"汪丽红 星期四 6-7 [3-10] 科研实验大楼B102","limit":"","note":""},{"code":"106357","sn":"0941106357","module":"体育","name":"体育I（匹克球）","credit":"1","gender":"混","category":"","teacher":"张卓","times":"张卓 星期一 3-4 [3-18] 匹克球场","limit":"","note":"","cls":["26大数据2班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26统计学基地班","26涉外法治实验班","26统计2班","26统计3班","26统计1班"]},{"code":"106357","sn":"0943106357","module":"体育","name":"体育I（匹克球）","credit":"1","gender":"混","category":"","teacher":"张卓","times":"张卓 星期五 3-4 [3-18] 匹克球场","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班","26数量经济","26经济学3班","26英法复语实验班","26经济数学双学位班","26日语","26商务英语","26经济学2班","26财经数学实验班","26经济学1班","26数学2班","26数学经济双学位班","26数学1班","26人工智能实验班","26人工智能1班","26人工智能2班","26计算机技术"]},{"code":"106357","sn":"0949106357","module":"体育","name":"体育I（匹克球）","credit":"1","gender":"混","category":"","teacher":"章凌凌","times":"章凌凌 星期二 3-4 [3-18] 匹克球场","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班"]},{"code":"106357","sn":"0951106357","module":"体育","name":"体育I（匹克球）","credit":"1","gender":"女","category":"","teacher":"章凌凌","times":"章凌凌 星期三 3-4 [3-18] 匹克球场","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26经济学拔尖班","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26数字前沿交叉实验班（统计学）","26数字前沿交叉实验班（大数据）","26数字前沿交叉实验班（数学与应用数学）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26劳动与社会保障金融学双学位班","26金融学2班","26保险精算1班","26保险精算2班","26公共管理"]},{"code":"106358","sn":"0975106358","module":"体育","name":"体育I（气排球）","credit":"1","gender":"混","category":"","teacher":"徐燕军","times":"徐燕军 星期五 3-4 [3-18] 武川气排球场","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班","26数量经济","26经济学3班","26英法复语实验班","26经济数学双学位班","26日语","26商务英语","26经济学2班","26财经数学实验班","26经济学1班","26数学2班","26数学经济双学位班","26数学1班","26人工智能实验班","26人工智能1班","26人工智能2班","26计算机技术"]},{"code":"106358","sn":"0978106358","module":"体育","name":"体育I（气排球）","credit":"1","gender":"混","category":"","teacher":"陈瑜","times":"陈瑜 星期一 3-4 [3-18] 武川气排球场","limit":"","note":"","cls":["26大数据2班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26统计学基地班","26涉外法治实验班","26统计2班","26统计3班","26统计1班"]},{"code":"106358","sn":"0980106358","module":"体育","name":"体育I（气排球）","credit":"1","gender":"混","category":"","teacher":"刘珺","times":"刘珺 星期四 3-4 [3-18] 武川气排球场","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26马克思主义理论经济学双学位","26审计学","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26财务管理2班"]},{"code":"106359","sn":"0284106359","module":"思政选择性必修","name":"习近平文化思想概论","credit":"1","gender":"","category":"","teacher":"康翟","times":"康翟 星期二 3-4 [3-10] 科研实验大楼B115","limit":"","note":""},{"code":"106411","sn":"0494106411","module":"新生研讨课","name":"当代农村问题田野调查","credit":"1","gender":"","category":"","teacher":"刘进、许庆","times":"刘进 星期一 6-7 [4-10] 一教104 | 许庆 星期一 6-7 [3] 一教104","limit":"","note":""},{"code":"106500","sn":"1021106500","module":"体育","name":"体育I（腰旗橄榄球）","credit":"1","gender":"混","category":"","teacher":"尹智猛","times":"尹智猛 星期五 3-4 [3-18] 武东田径场","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班","26数量经济","26经济学3班","26英法复语实验班","26经济数学双学位班","26日语","26商务英语","26经济学2班","26财经数学实验班","26经济学1班","26数学2班","26数学经济双学位班","26数学1班","26人工智能实验班","26人工智能1班","26人工智能2班","26计算机技术"]},{"code":"106840","sn":"65106840","module":"艺术修养","name":"英语戏剧经典鉴赏与实践","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"106849","sn":"0733106849","module":"新生研讨课","name":"经济数据与因果推断","credit":"1","gender":"","category":"","teacher":"孙燕","times":"孙燕 星期一 6-7 [3-10] 科研实验大楼505（实验经济学实验室）","limit":"","note":""},{"code":"106873","sn":"2203106873","module":"新生研讨课","name":"企业社会责任与可持续发展","credit":"1","gender":"","category":"","teacher":"符如春伊","times":"符如春伊 星期五 8-9 [3-10] 三教307","limit":"","note":""},{"code":"106914","sn":"2204106914","module":"新生研讨课","name":"数智时代营销变革与创新研讨","credit":"1","gender":"","category":"","teacher":"叶巍岭","times":"叶巍岭 星期三 3-4 [3-10] 三教307","limit":"","note":""},{"code":"106917","sn":"2207106917","module":"新生研讨课","name":"企业“走出去”与国际商务","credit":"1","gender":"","category":"","teacher":"范建亭","times":"范建亭 星期四 1-2 [3-10] 三教107","limit":"","note":""},{"code":"106977","sn":"0507106977","module":"新生研讨课","name":"在跌宕起伏中前行的金融","credit":"1","gender":"","category":"","teacher":"邹平","times":"邹平 星期四 6-7 [3-10] 科研实验大楼B103","limit":"","note":""},{"code":"107292","sn":"0098107292","module":"新生研讨课","name":"数字时代的青年社会学","credit":"1","gender":"","category":"","teacher":"邢婷婷","times":"邢婷婷 星期二 3-4 [3-10] 三教301","limit":"","note":""},{"code":"107292","sn":"0160107292","module":"新生研讨课","name":"数字时代的青年社会学","credit":"1","gender":"","category":"","teacher":"苏熠慧","times":"苏熠慧 星期二 12-13 [3-10] 三教303","limit":"","note":""},{"code":"107294","sn":"1537107294","module":"新生研讨课","name":"马克思《数学手稿》讨论班","credit":"1","gender":"","category":"","teacher":"陈焱","times":"陈焱 星期二 11-12 [3-10] 三教307","limit":"","note":""},{"code":"107419","sn":"0769107419","module":"体育","name":"体育I（旱地冰球）","credit":"1","gender":"混","category":"","teacher":"黄文奇","times":"黄文奇 星期一 3-4 [3-18] 篮球场3（馆外)","limit":"","note":"","cls":["26大数据2班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26统计学基地班","26涉外法治实验班","26统计2班","26统计3班","26统计1班"]},{"code":"107419","sn":"0780107419","module":"体育","name":"体育I（旱地冰球）","credit":"1","gender":"混","category":"","teacher":"黄文奇","times":"黄文奇 星期五 3-4 [3-18] 篮球场3（馆外)","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班","26数量经济","26经济学3班","26英法复语实验班","26经济数学双学位班","26日语","26商务英语","26经济学2班","26财经数学实验班","26经济学1班","26数学2班","26数学经济双学位班","26数学1班","26人工智能实验班","26人工智能1班","26人工智能2班","26计算机技术"]},{"code":"107420","sn":"0848107420","module":"体育","name":"体育I（健身塑形）","credit":"1","gender":"混","category":"","teacher":"罗光霞","times":"罗光霞 星期四 3-4 [3-18] 健身房","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26马克思主义理论经济学双学位","26审计学","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26财务管理2班"]},{"code":"107420","sn":"0853107420","module":"体育","name":"体育I（健身塑形）","credit":"1","gender":"混","category":"","teacher":"罗光霞","times":"罗光霞 星期五 3-4 [3-18] 健身房","limit":"","note":"","cls":["26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商管理1班","26工商统计双学位班","26数字经济实验班","26商务分析实验班","26数量经济","26经济学3班","26英法复语实验班","26经济数学双学位班","26日语","26商务英语","26经济学2班","26财经数学实验班","26经济学1班","26数学2班","26数学经济双学位班","26数学1班","26人工智能实验班","26人工智能1班","26人工智能2班","26计算机技术"]},{"code":"107420","sn":"0858107420","module":"体育","name":"体育I（健身塑形）","credit":"1","gender":"混","category":"","teacher":"曹淼","times":"曹淼 星期一 3-4 [3-18] 健身房","limit":"","note":"","cls":["26大数据2班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26统计学基地班","26涉外法治实验班","26统计2班","26统计3班","26统计1班"]},{"code":"107420","sn":"0867107420","module":"体育","name":"体育I（健身塑形）","credit":"1","gender":"混","category":"","teacher":"曹淼","times":"曹淼 星期三 3-4 [3-18] 健身房","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26经济学拔尖班","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26数字前沿交叉实验班（统计学）","26数字前沿交叉实验班（大数据）","26数字前沿交叉实验班（数学与应用数学）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26劳动与社会保障金融学双学位班","26金融学2班","26保险精算1班","26保险精算2班","26公共管理"]},{"code":"107420","sn":"0874107420","module":"体育","name":"体育I（健身塑形）","credit":"1","gender":"女","category":"","teacher":"曹淼","times":"曹淼 星期四 3-4 [3-18] 健身房","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26马克思主义理论经济学双学位","26审计学","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26财务管理2班"]},{"code":"107426","sn":"0743107426","module":"体育","name":"体育I（高尔夫）","credit":"1","gender":"","category":"","teacher":"高瑜","times":"高瑜 星期一 3-4 [4-17] 高尔夫球场 | 高瑜 星期一 3-4 [3][18] 二教208","limit":"","note":"","cls":["26大数据2班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26统计学基地班","26涉外法治实验班","26统计2班","26统计3班","26统计1班"]},{"code":"107426","sn":"0750107426","module":"体育","name":"体育I（高尔夫）","credit":"1","gender":"","category":"","teacher":"高瑜","times":"高瑜 星期三 3-4 [4-17] 高尔夫球场 | 高瑜 星期三 3-4 [3][18] 二教208","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26经济学拔尖班","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26数字前沿交叉实验班（统计学）","26数字前沿交叉实验班（大数据）","26数字前沿交叉实验班（数学与应用数学）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26劳动与社会保障金融学双学位班","26金融学2班","26保险精算1班","26保险精算2班","26公共管理"]},{"code":"107440","sn":"2201107440","module":"英语","name":"大学英语I（匡时班）","credit":"2","gender":"","category":"发展模块（公共外语）","teacher":"王莉娜","times":"王莉娜 星期四 3-4 双 [4-18] 科研楼415（语音室） | 王莉娜 星期四 3-4 单 [3-17] 一教209","limit":"","note":"","cls":["26经济学拔尖班"]},{"code":"107585","sn":"71107585","module":"艺术修养","name":"钢琴表演实践","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"107586","sn":"68107586","module":"艺术修养","name":"打击乐表演实践","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"107587","sn":"69107587","module":"艺术修养","name":"琵琶表演实践","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"107588","sn":"70107588","module":"艺术修养","name":"民族器乐室内乐","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"107589","sn":"67107589","module":"艺术修养","name":"书法名作赏析与临摹实践","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"107716","sn":"0758107716","module":"体育","name":"体育I（棍网球）","credit":"1","gender":"混","category":"","teacher":"曹雪原","times":"曹雪原 星期四 3-4 [3-18] 武东田径场","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26马克思主义理论经济学双学位","26审计学","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26财务管理2班"]},{"code":"107893","sn":"2208107893","module":"新生研讨课","name":"管理学名著导读","credit":"1","gender":"","category":"","teacher":"王晓玉","times":"王晓玉 星期四 11-12 [3-10] 三教301","limit":"","note":""},{"code":"107906","sn":"0707107906","module":"新生研讨课","name":"AI基础设施投融资创新与管理","credit":"1","gender":"","category":"","teacher":"肖升生","times":"肖升生 星期一 6-7 [3-10] 一教305","limit":"","note":""},{"code":"107909","sn":"0386107909","module":"新生研讨课","name":"大语言模型高效应用","credit":"1","gender":"","category":"","teacher":"崔翔宇","times":"崔翔宇 星期二 3-4 [3-10] 三教401","limit":"","note":""},{"code":"107920","sn":"0388107920","module":"新生研讨课","name":"高水平制度型开放问题研究","credit":"1","gender":"","category":"","teacher":"何骏","times":"何骏 星期二 3-4 [3-10] 科研实验大楼B103","limit":"","note":""},{"code":"107943","sn":"0362107943","module":"新生研讨课","name":"中国经济基本理论问题研讨","credit":"1","gender":"","category":"","teacher":"严金强","times":"严金强 星期一 3-4 [3-10] 教技楼337","limit":"","note":""},{"code":"107943","sn":"0698107943","module":"新生研讨课","name":"中国经济基本理论问题研讨","credit":"1","gender":"","category":"","teacher":"严金强","times":"严金强 星期一 6-7 [3-10] 教技楼335","limit":"","note":""},{"code":"107957","sn":"0719107957","module":"新生研讨课","name":"马克思主义理论主文献研读","credit":"1","gender":"","category":"","teacher":"周杰","times":"周杰 星期三 6-7 [3-10] 三教703","limit":"","note":""},{"code":"108179","sn":"1048108179","module":"通识选修","name":"能源与可持续发展","credit":"2","gender":"","category":"","teacher":"王婧","times":"王婧 星期三 6-7 [10-13] 实践教学2 | 王婧 星期三 6-7 [3-9][14-18] 一教304","limit":"30","note":""},{"code":"108181","sn":"0831108181","module":"新生研讨课","name":"可持续发展与ESG理念","credit":"1","gender":"","category":"","teacher":"吴晨钰","times":"吴晨钰 星期五 3-4 [3-10] 科研实验大楼B103","limit":"","note":""},{"code":"108365","sn":"0597108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"崔海玲","times":"崔海玲 星期四 3-4 [3-18] 一教102","limit":"","note":"","cls":["26数学2班","26数学经济双学位班","26大数据2班","26数学1班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26涉外法治实验班","26日语","26数字经济实验班","26财经数学实验班"]},{"code":"108365","sn":"1432108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"崔海玲","times":"崔海玲 星期四 1-2 [3-18] 一教102","limit":"","note":"","cls":["26工商管理1班","26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商统计双学位班","26经济学1班","26经济学2班","26经济学3班","26数量经济","26经济数学双学位班","26计算机技术","26人工智能1班","26人工智能2班","26人工智能实验班","26马克思主义理论经济学双学位","26商务分析实验班"]},{"code":"108365","sn":"1461108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"崔海玲","times":"崔海玲 星期二 3-4 [3-18] 一教207","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26审计学","26劳动与社会保障金融学双学位班","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26公共管理","26财务管理2班"]},{"code":"108365","sn":"1517108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"崔海玲","times":"崔海玲 星期二 1-2 [3-18] 一教207","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26前沿交叉实验班（统计学）","26前沿交叉实验班（大数据）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26金融学2班","26保险精算1班","26统计学基地班","26保险精算2班","26统计2班","26统计3班","26统计1班"]},{"code":"108365","sn":"1544108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"常姗姗","times":"常姗姗 星期四 3-4 [3-18] 一教103","limit":"","note":"","cls":["26数学2班","26数学经济双学位班","26大数据2班","26数学1班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26涉外法治实验班","26日语","26数字经济实验班","26财经数学实验班"]},{"code":"108365","sn":"1550108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"常姗姗","times":"常姗姗 星期四 1-2 [3-18] 一教103","limit":"","note":"","cls":["26工商管理1班","26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商统计双学位班","26经济学1班","26经济学2班","26经济学3班","26数量经济","26经济数学双学位班","26计算机技术","26人工智能1班","26人工智能2班","26人工智能实验班","26马克思主义理论经济学双学位","26商务分析实验班"]},{"code":"108365","sn":"1557108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"黄樱","times":"黄樱 星期二 1-2 [3-18] 一教211","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26前沿交叉实验班（统计学）","26前沿交叉实验班（大数据）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26金融学2班","26保险精算1班","26统计学基地班","26保险精算2班","26统计2班","26统计3班","26统计1班"]},{"code":"108365","sn":"1656108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"黄樱","times":"黄樱 星期二 3-4 [3-18] 一教211","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26审计学","26劳动与社会保障金融学双学位班","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26公共管理","26财务管理2班"]},{"code":"108365","sn":"1695108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"黄樱","times":"黄樱 星期四 1-2 [3-18] 一教104","limit":"","note":"","cls":["26工商管理1班","26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商统计双学位班","26经济学1班","26经济学2班","26经济学3班","26数量经济","26经济数学双学位班","26计算机技术","26人工智能1班","26人工智能2班","26人工智能实验班","26马克思主义理论经济学双学位","26商务分析实验班"]},{"code":"108365","sn":"1700108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"黄樱","times":"黄樱 星期四 3-4 [3-18] 一教104","limit":"","note":"","cls":["26数学2班","26数学经济双学位班","26大数据2班","26数学1班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26涉外法治实验班","26日语","26数字经济实验班","26财经数学实验班"]},{"code":"108365","sn":"1714108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"孟雅萱","times":"孟雅萱 星期二 1-2 [3-18] 一教212","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26前沿交叉实验班（统计学）","26前沿交叉实验班（大数据）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26金融学2班","26保险精算1班","26统计学基地班","26保险精算2班","26统计2班","26统计3班","26统计1班"]},{"code":"108365","sn":"1732108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"孟雅萱","times":"孟雅萱 星期二 3-4 [3-18] 一教212","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26审计学","26劳动与社会保障金融学双学位班","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26公共管理","26财务管理2班"]},{"code":"108365","sn":"1737108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"汪小萍","times":"汪小萍 星期二 1-2 [3-18] 二教408","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26前沿交叉实验班（统计学）","26前沿交叉实验班（大数据）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26金融学2班","26保险精算1班","26统计学基地班","26保险精算2班","26统计2班","26统计3班","26统计1班"]},{"code":"108365","sn":"1787108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"汪小萍","times":"汪小萍 星期二 3-4 [3-18] 二教408","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26审计学","26劳动与社会保障金融学双学位班","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26公共管理","26财务管理2班"]},{"code":"108365","sn":"1794108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"汪小萍","times":"汪小萍 星期四 1-2 [3-18] 二教408","limit":"","note":"","cls":["26工商管理1班","26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商统计双学位班","26经济学1班","26经济学2班","26经济学3班","26数量经济","26经济数学双学位班","26计算机技术","26人工智能1班","26人工智能2班","26人工智能实验班","26马克思主义理论经济学双学位","26商务分析实验班"]},{"code":"108365","sn":"1804108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"汪小萍","times":"汪小萍 星期四 3-4 [3-18] 二教408","limit":"","note":"","cls":["26数学2班","26数学经济双学位班","26大数据2班","26数学1班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26涉外法治实验班","26日语","26数字经济实验班","26财经数学实验班"]},{"code":"108365","sn":"1894108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"姚俊","times":"姚俊 星期二 1-2 [3-18] 一教302","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26前沿交叉实验班（统计学）","26前沿交叉实验班（大数据）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26金融学2班","26保险精算1班","26统计学基地班","26保险精算2班","26统计2班","26统计3班","26统计1班"]},{"code":"108365","sn":"1941108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"姚俊","times":"姚俊 星期二 3-4 [3-18] 一教302","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26审计学","26劳动与社会保障金融学双学位班","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26公共管理","26财务管理2班"]},{"code":"108365","sn":"1948108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"王虹慧","times":"王虹慧 星期二 1-2 [3-18] 一教103","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26前沿交叉实验班（统计学）","26前沿交叉实验班（大数据）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26金融学2班","26保险精算1班","26统计学基地班","26保险精算2班","26统计2班","26统计3班","26统计1班"]},{"code":"108365","sn":"1955108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"王虹慧","times":"王虹慧 星期二 3-4 [3-18] 一教103","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26审计学","26劳动与社会保障金融学双学位班","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26公共管理","26财务管理2班"]},{"code":"108365","sn":"1962108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"王虹慧","times":"王虹慧 星期四 1-2 [3-18] 一教112","limit":"","note":"","cls":["26工商管理1班","26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商统计双学位班","26经济学1班","26经济学2班","26经济学3班","26数量经济","26经济数学双学位班","26计算机技术","26人工智能1班","26人工智能2班","26人工智能实验班","26马克思主义理论经济学双学位","26商务分析实验班"]},{"code":"108365","sn":"1964108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"王虹慧","times":"王虹慧 星期四 3-4 [3-18] 一教112","limit":"","note":"","cls":["26数学2班","26数学经济双学位班","26大数据2班","26数学1班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26涉外法治实验班","26日语","26数字经济实验班","26财经数学实验班"]},{"code":"108365","sn":"1977108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"王雪梅","times":"王雪梅 星期二 1-2 [3-18] 二教415","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26前沿交叉实验班（统计学）","26前沿交叉实验班（大数据）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26金融学2班","26保险精算1班","26统计学基地班","26保险精算2班","26统计2班","26统计3班","26统计1班"]},{"code":"108365","sn":"2106108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"王雪梅","times":"王雪梅 星期二 3-4 [3-18] 二教415","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26审计学","26劳动与社会保障金融学双学位班","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26公共管理","26财务管理2班"]},{"code":"108365","sn":"2209108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"王雪梅","times":"王雪梅 星期四 1-2 [3-18] 二教415","limit":"","note":"","cls":["26工商管理1班","26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商统计双学位班","26经济学1班","26经济学2班","26经济学3班","26数量经济","26经济数学双学位班","26计算机技术","26人工智能1班","26人工智能2班","26人工智能实验班","26马克思主义理论经济学双学位","26商务分析实验班"]},{"code":"108365","sn":"2210108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"王雪梅","times":"王雪梅 星期四 3-4 [3-18] 二教415","limit":"","note":"","cls":["26数学2班","26数学经济双学位班","26大数据2班","26数学1班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26涉外法治实验班","26日语","26数字经济实验班","26财经数学实验班"]},{"code":"108365","sn":"2211108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"宋明","times":"宋明 星期四 1-2 [3-18] 一教302","limit":"","note":"","cls":["26工商管理1班","26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商统计双学位班","26经济学1班","26经济学2班","26经济学3班","26数量经济","26经济数学双学位班","26计算机技术","26人工智能1班","26人工智能2班","26人工智能实验班","26马克思主义理论经济学双学位","26商务分析实验班"]},{"code":"108365","sn":"2212108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"宋明","times":"宋明 星期四 3-4 [3-18] 一教302","limit":"","note":"","cls":["26数学2班","26数学经济双学位班","26大数据2班","26数学1班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26涉外法治实验班","26日语","26数字经济实验班","26财经数学实验班"]},{"code":"108365","sn":"2213108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"谭慧玉","times":"谭慧玉 星期二 1-2 [3-18] 一教109","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26前沿交叉实验班（统计学）","26前沿交叉实验班（大数据）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26金融学2班","26保险精算1班","26统计学基地班","26保险精算2班","26统计2班","26统计3班","26统计1班"]},{"code":"108365","sn":"2214108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"谭慧玉","times":"谭慧玉 星期二 3-4 [3-18] 一教109","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26审计学","26劳动与社会保障金融学双学位班","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26公共管理","26财务管理2班"]},{"code":"108365","sn":"2215108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"谭慧玉","times":"谭慧玉 星期四 1-2 [3-18] 一教304","limit":"","note":"","cls":["26工商管理1班","26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商统计双学位班","26经济学1班","26经济学2班","26经济学3班","26数量经济","26经济数学双学位班","26计算机技术","26人工智能1班","26人工智能2班","26人工智能实验班","26马克思主义理论经济学双学位","26商务分析实验班"]},{"code":"108365","sn":"2216108365","module":"英语","name":"财经通用学术英语（中级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"谭慧玉","times":"谭慧玉 星期四 3-4 [3-18] 一教304","limit":"","note":"","cls":["26数学2班","26数学经济双学位班","26大数据2班","26数学1班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26涉外法治实验班","26日语","26数字经济实验班","26财经数学实验班"]},{"code":"108366","sn":"0830108366","module":"英语","name":"财经通用学术英语（高级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"郭靓","times":"郭靓 星期二 1-2 [3-18] 一教204","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26前沿交叉实验班（统计学）","26前沿交叉实验班（大数据）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26金融学2班","26保险精算1班","26统计学基地班","26保险精算2班","26统计2班","26统计3班","26统计1班"]},{"code":"108366","sn":"0856108366","module":"英语","name":"财经通用学术英语（高级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"谢倩","times":"谢倩 星期四 1-2 [3-18] 一教204","limit":"","note":"","cls":["26工商管理1班","26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商统计双学位班","26经济学1班","26经济学2班","26经济学3班","26数量经济","26经济数学双学位班","26计算机技术","26人工智能1班","26人工智能2班","26人工智能实验班","26马克思主义理论经济学双学位","26商务分析实验班"]},{"code":"108366","sn":"0864108366","module":"英语","name":"财经通用学术英语（高级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"谢倩","times":"谢倩 星期四 3-4 [3-18] 一教204","limit":"","note":"","cls":["26数学2班","26数学经济双学位班","26大数据2班","26数学1班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26涉外法治实验班","26日语","26数字经济实验班","26财经数学实验班"]},{"code":"108366","sn":"0877108366","module":"英语","name":"财经通用学术英语（高级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"周晓梅","times":"周晓梅 星期四 1-2 [3-18] 一教205","limit":"","note":"","cls":["26工商管理1班","26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商统计双学位班","26经济学1班","26经济学2班","26经济学3班","26数量经济","26经济数学双学位班","26计算机技术","26人工智能1班","26人工智能2班","26人工智能实验班","26马克思主义理论经济学双学位","26商务分析实验班"]},{"code":"108366","sn":"1042108366","module":"英语","name":"财经通用学术英语（高级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"周晓梅","times":"周晓梅 星期四 3-4 [3-18] 一教205","limit":"","note":"","cls":["26数学2班","26数学经济双学位班","26大数据2班","26数学1班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26涉外法治实验班","26日语","26数字经济实验班","26财经数学实验班"]},{"code":"108366","sn":"1103108366","module":"英语","name":"财经通用学术英语（高级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"朱舒然","times":"朱舒然 星期二 1-2 [3-18] 一教112","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26前沿交叉实验班（统计学）","26前沿交叉实验班（大数据）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26金融学2班","26保险精算1班","26统计学基地班","26保险精算2班","26统计2班","26统计3班","26统计1班"]},{"code":"108366","sn":"1240108366","module":"英语","name":"财经通用学术英语（高级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"朱舒然","times":"朱舒然 星期二 3-4 [3-18] 一教112","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26审计学","26劳动与社会保障金融学双学位班","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26公共管理","26财务管理2班"]},{"code":"108366","sn":"1253108366","module":"英语","name":"财经通用学术英语（高级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"谭菁","times":"谭菁 星期二 1-2 [3-18] 一教111","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26前沿交叉实验班（统计学）","26前沿交叉实验班（大数据）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26金融学2班","26保险精算1班","26统计学基地班","26保险精算2班","26统计2班","26统计3班","26统计1班"]},{"code":"108366","sn":"1265108366","module":"英语","name":"财经通用学术英语（高级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"谭菁","times":"谭菁 星期四 1-2 [3-18] 一教111","limit":"","note":"","cls":["26工商管理1班","26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商统计双学位班","26经济学1班","26经济学2班","26经济学3班","26数量经济","26经济数学双学位班","26计算机技术","26人工智能1班","26人工智能2班","26人工智能实验班","26马克思主义理论经济学双学位","26商务分析实验班"]},{"code":"108366","sn":"1272108366","module":"英语","name":"财经通用学术英语（高级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"谭菁","times":"谭菁 星期四 3-4 [3-18] 一教111","limit":"","note":"","cls":["26数学2班","26数学经济双学位班","26大数据2班","26数学1班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26涉外法治实验班","26日语","26数字经济实验班","26财经数学实验班"]},{"code":"108366","sn":"1278108366","module":"英语","name":"财经通用学术英语（高级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"谭菁","times":"谭菁 星期二 3-4 [3-18] 一教111","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26审计学","26劳动与社会保障金融学双学位班","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26公共管理","26财务管理2班"]},{"code":"108366","sn":"1302108366","module":"英语","name":"财经通用学术英语（高级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"陈佳妮","times":"陈佳妮 星期四 3-4 [3-18] 一教202","limit":"","note":"","cls":["26数学2班","26数学经济双学位班","26大数据2班","26数学1班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26涉外法治实验班","26日语","26数字经济实验班","26财经数学实验班"]},{"code":"108366","sn":"1304108366","module":"英语","name":"财经通用学术英语（高级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"陈佳妮","times":"陈佳妮 星期四 1-2 [3-18] 一教202","limit":"","note":"","cls":["26工商管理1班","26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商统计双学位班","26经济学1班","26经济学2班","26经济学3班","26数量经济","26经济数学双学位班","26计算机技术","26人工智能1班","26人工智能2班","26人工智能实验班","26马克思主义理论经济学双学位","26商务分析实验班"]},{"code":"108366","sn":"1333108366","module":"英语","name":"财经通用学术英语（高级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"张洁","times":"张洁 星期二 3-4 [3-18] 一教205","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26审计学","26劳动与社会保障金融学双学位班","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26公共管理","26财务管理2班"]},{"code":"108366","sn":"1353108366","module":"英语","name":"财经通用学术英语（高级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"张洁","times":"张洁 星期二 1-2 [3-18] 一教205","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26前沿交叉实验班（统计学）","26前沿交叉实验班（大数据）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26金融学2班","26保险精算1班","26统计学基地班","26保险精算2班","26统计2班","26统计3班","26统计1班"]},{"code":"108366","sn":"1377108366","module":"英语","name":"财经通用学术英语（高级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"沈娴敏","times":"沈娴敏 星期二 3-4 [3-18] 一教209","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26审计学","26劳动与社会保障金融学双学位班","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26公共管理","26财务管理2班"]},{"code":"108366","sn":"1421108366","module":"英语","name":"财经通用学术英语（高级）","credit":"2","gender":"","category":"提高模块（公共外语）","teacher":"沈娴敏","times":"沈娴敏 星期二 1-2 [3-18] 一教209","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26前沿交叉实验班（统计学）","26前沿交叉实验班（大数据）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26金融学2班","26保险精算1班","26统计学基地班","26保险精算2班","26统计2班","26统计3班","26统计1班"]},{"code":"108367","sn":"0085108367","module":"英语","name":"大学英语综合（基础）I","credit":"2","gender":"","category":"基础模块（公共外语）","teacher":"常洁","times":"常洁 星期四 1-2 双 [4-18] 一教207 | 常洁 星期四 1-2 单 [3-17] 科研楼402（语音室）","limit":"","note":"","cls":["26工商管理1班","26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商统计双学位班","26经济学1班","26经济学2班","26经济学3班","26数量经济","26经济数学双学位班","26计算机技术","26人工智能1班","26人工智能2班","26人工智能实验班","26马克思主义理论经济学双学位","26商务分析实验班"]},{"code":"108367","sn":"0123108367","module":"英语","name":"大学英语综合（基础）I","credit":"2","gender":"","category":"基础模块（公共外语）","teacher":"龙菡","times":"龙菡 星期四 3-4 双 [4-18] 一教209 | 龙菡 星期四 3-4 单 [3-17] 科研楼413（语音室）","limit":"","note":"","cls":["26数学2班","26数学经济双学位班","26大数据2班","26数学1班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26涉外法治实验班","26日语","26数字经济实验班","26财经数学实验班"]},{"code":"108367","sn":"0804108367","module":"英语","name":"大学英语综合（基础）I","credit":"2","gender":"","category":"基础模块（公共外语）","teacher":"龙菡","times":"龙菡 星期四 1-2 双 [4-18] 一教209 | 龙菡 星期四 1-2 单 [3-17] 科研楼413（语音室）","limit":"","note":"","cls":["26工商管理1班","26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商统计双学位班","26经济学1班","26经济学2班","26经济学3班","26数量经济","26经济数学双学位班","26计算机技术","26人工智能1班","26人工智能2班","26人工智能实验班","26马克思主义理论经济学双学位","26商务分析实验班"]},{"code":"108367","sn":"2153108367","module":"英语","name":"大学英语综合（基础）I","credit":"2","gender":"","category":"基础模块（公共外语）","teacher":"龙菡","times":"龙菡 星期二 3-4 双 [4-18] 一教304 | 龙菡 星期二 3-4 单 [3-17] 科研楼413（语音室）","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26审计学","26劳动与社会保障金融学双学位班","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26公共管理","26财务管理2班"]},{"code":"108367","sn":"2217108367","module":"英语","name":"大学英语综合（基础）I","credit":"2","gender":"","category":"基础模块（公共外语）","teacher":"龙菡","times":"龙菡 星期二 1-2 双 [4-18] 一教304 | 龙菡 星期二 1-2 单 [3-17] 科研楼413（语音室）","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26前沿交叉实验班（统计学）","26前沿交叉实验班（大数据）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26金融学2班","26保险精算1班","26统计学基地班","26保险精算2班","26统计2班","26统计3班","26统计1班"]},{"code":"108367","sn":"2218108367","module":"英语","name":"大学英语综合（基础）I","credit":"2","gender":"","category":"基础模块（公共外语）","teacher":"杨肖","times":"杨肖 星期二 1-2 双 [4-18] 一教202 | 杨肖 星期二 1-2 单 [3-17] 科研楼406（语音室）","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26前沿交叉实验班（统计学）","26前沿交叉实验班（大数据）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26金融学2班","26保险精算1班","26统计学基地班","26保险精算2班","26统计2班","26统计3班","26统计1班"]},{"code":"108367","sn":"2219108367","module":"英语","name":"大学英语综合（基础）I","credit":"2","gender":"","category":"基础模块（公共外语）","teacher":"杨肖","times":"杨肖 星期二 3-4 双 [4-18] 一教202 | 杨肖 星期二 3-4 单 [3-17] 科研楼406（语音室）","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26审计学","26劳动与社会保障金融学双学位班","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26公共管理","26财务管理2班"]},{"code":"108367","sn":"2220108367","module":"英语","name":"大学英语综合（基础）I","credit":"2","gender":"","category":"基础模块（公共外语）","teacher":"管海佳","times":"管海佳 星期四 1-2 双 [4-18] 一教101 | 管海佳 星期四 1-2 单 [3-17] 科研楼406（语音室）","limit":"","note":"","cls":["26工商管理1班","26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商统计双学位班","26经济学1班","26经济学2班","26经济学3班","26数量经济","26经济数学双学位班","26计算机技术","26人工智能1班","26人工智能2班","26人工智能实验班","26马克思主义理论经济学双学位","26商务分析实验班"]},{"code":"108367","sn":"2221108367","module":"英语","name":"大学英语综合（基础）I","credit":"2","gender":"","category":"基础模块（公共外语）","teacher":"管海佳","times":"管海佳 星期四 3-4 双 [4-18] 一教101 | 管海佳 星期四 3-4 单 [3-17] 科研楼406（语音室）","limit":"","note":"","cls":["26数学2班","26数学经济双学位班","26大数据2班","26数学1班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26涉外法治实验班","26日语","26数字经济实验班","26财经数学实验班"]},{"code":"108367","sn":"2222108367","module":"英语","name":"大学英语综合（基础）I","credit":"2","gender":"","category":"基础模块（公共外语）","teacher":"翁依琴","times":"翁依琴 星期四 3-4 双 [4-18] 一教211 | 翁依琴 星期四 3-4 单 [3-17] 科研楼415（语音室）","limit":"","note":"","cls":["26数学2班","26数学经济双学位班","26大数据2班","26数学1班","26电子商务","26法学金融双学位班","26大数据1班","26财经法治卓越班","26信息管理","26法学","26涉外法治实验班","26日语","26数字经济实验班","26财经数学实验班"]},{"code":"108367","sn":"2223108367","module":"英语","name":"大学英语综合（基础）I","credit":"2","gender":"","category":"基础模块（公共外语）","teacher":"翁依琴","times":"翁依琴 星期四 1-2 双 [4-18] 一教211 | 翁依琴 星期四 1-2 单 [3-17] 科研楼415（语音室）","limit":"","note":"","cls":["26工商管理1班","26工商管理2班","26工商管理3班","26工商管理4班","26国际贸易","26工商统计双学位班","26经济学1班","26经济学2班","26经济学3班","26数量经济","26经济数学双学位班","26计算机技术","26人工智能1班","26人工智能2班","26人工智能实验班","26马克思主义理论经济学双学位","26商务分析实验班"]},{"code":"108367","sn":"2224108367","module":"英语","name":"大学英语综合（基础）I","credit":"2","gender":"","category":"基础模块（公共外语）","teacher":"翁依琴","times":"翁依琴 星期二 3-4 双 [4-18] 一教102 | 翁依琴 星期二 3-4 单 [3-17] 科研楼415（语音室）","limit":"","note":"","cls":["26投资学1班","26财政学2班","26投资数学双学位班","26投资学2班","26财政学1班","26审计学","26劳动与社会保障金融学双学位班","26国会ACCA","26会计学1班","26会计学2班","26财务管理1班","26公共管理","26财务管理2班"]},{"code":"108367","sn":"2225108367","module":"英语","name":"大学英语综合（基础）I","credit":"2","gender":"","category":"基础模块（公共外语）","teacher":"翁依琴","times":"翁依琴 星期二 1-2 双 [4-18] 一教102 | 翁依琴 星期二 1-2 单 [3-17] 科研楼415（语音室）","limit":"","note":"","cls":["26AI新财经实验班（数字经济）","26全球财经实验班","26AI新财经实验班（财政学）","26AI新财经实验班（会计学）","26AI新财经实验班（金融学）","26前沿交叉实验班（统计学）","26前沿交叉实验班（大数据）","26数字与智能金融1班","26数字与智能金融2班","26金融统计双学位班","26金融学1班","26金融学2班","26保险精算1班","26统计学基地班","26保险精算2班","26统计2班","26统计3班","26统计1班"]},{"code":"108394","sn":"0544108394","module":"思政选择性必修","name":"习近平党建思想概论","credit":"1","gender":"","category":"","teacher":"符豪","times":"符豪 星期三 6-7 [3-10] 武东路梯十二","limit":"","note":""},{"code":"108396","sn":"0552108396","module":"思政选择性必修","name":"习近平总书记关于企业家精神重要论述专题","credit":"1","gender":"","category":"","teacher":"夏明月","times":"夏明月 星期三 8-9 [3-10] 科研实验大楼B115","limit":"","note":""},{"code":"108397","sn":"0588108397","module":"思政选择性必修","name":"习近平总书记关于推进城乡融合与乡村振兴重要论述专题","credit":"1","gender":"","category":"","teacher":"戴媛媛","times":"戴媛媛 星期三 3-4 [3-10] 三教304","limit":"","note":""},{"code":"108502","sn":"0373108502","module":"思政选择性必修","name":"习近平总书记关于加强和改进民族工作的重要思想","credit":"1","gender":"","category":"","teacher":"周杰","times":"周杰 星期三 8-9 [3-10] 三教802","limit":"","note":""},{"code":"108506","sn":"0572108506","module":"新生研讨课","name":"人工智能时代与未来教育","credit":"1","gender":"","category":"","teacher":"李敏","times":"李敏 星期四 6-7 [3-10] 科研实验大楼B107","limit":"","note":""},{"code":"108549","sn":"0956108549","module":"思政选择性必修","name":"习近平外交思想概论","credit":"1","gender":"","category":"","teacher":"李亚丁","times":"李亚丁 星期四 6-7 [3-10] 三教802","limit":"","note":""},{"code":"108676","sn":"1066108676","module":"思政选择性必修","name":"大学生法律基础","credit":"1","gender":"","category":"","teacher":"陈芳","times":"陈芳 星期三 6-7 [3-10] 科研实验大楼B115","limit":"","note":""},{"code":"108677","sn":"1072108677","module":"思政选择性必修","name":"《共产党宣言》导读","credit":"1","gender":"","category":"","teacher":"李昊晟","times":"李昊晟 星期四 6-7 [3-10] 三教301","limit":"","note":""},{"code":"108793","sn":"72108793","module":"艺术修养","name":"戏剧表演实践","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"},{"code":"109303","sn":"51109303","module":"艺术修养","name":"音乐欣赏","credit":"","gender":"","category":"","teacher":"","times":"","limit":"","note":"艺术修养课程(本学期新生不可选,供了解)"}]};
 (function(){
-  var KEY='sufe_xk_wishlist_v1';
-  function nowISO(){ return new Date().toISOString(); }
-  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
-  function load(){
-    try{ var raw=localStorage.getItem(KEY); if(raw){ var o=JSON.parse(raw); if(o&&Array.isArray(o.items)) return o; } }catch(e){}
-    return { version:1, updatedAt:nowISO(), items:[] };
-  }
-  function save(){ state.updatedAt=nowISO(); localStorage.setItem(KEY,JSON.stringify(state)); render(); }
-  var state=load();
+  'use strict';
+  var KEY = 'sufe_xk_wishlist_v2';
+  var PKEY = 'sufe_xk_profile_v2';
+  var $ = function(id){ return document.getElementById(id); };
 
-  var $=function(id){ return document.getElementById(id); };
-  var form=$('form'), f_id=$('f_id'), f_name=$('f_name'), f_code=$('f_code'), f_prio=$('f_prio'),
-      f_type=$('f_type'), f_status=$('f_status'), f_time=$('f_time'), f_note=$('f_note');
+  /* ---------- 数据 ---------- */
+  var CAT = null;
+  var profile = null;
+  function loadProfile(){ try { var o = JSON.parse(localStorage.getItem(PKEY) || 'null'); return o && o.cls ? o : null; } catch(e){ return null; } }
+  function saveProfile(p){ localStorage.setItem(PKEY, JSON.stringify(p)); renderAll(); }
+  profile = loadProfile();
 
-  function typeTag(t){
-    var map={ '必修':'t-must','体育':'t-sport','英语':'t-eng','通识':'t-gen','选修':'t-elec','其他':'t-elec' };
-    return '<span class="tag '+(map[t]||'t-elec')+'">'+t+'</span>';
+  function loadCat(cb){
+    if (window.CATDATA && window.CATDATA.courses) { CAT = window.CATDATA; cb && cb(); return; }
+    fetch('catalog.json?t=' + Date.now())
+      .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function(d){ CAT = d; cb && cb(); })
+      .catch(function(){ CAT = null; cb && cb(); });
   }
-  function statusTag(s){ return s==='main' ? '<span class="tag t-main">主选</span>' : '<span class="tag t-back">备选</span>'; }
+  function typeOf(row){
+    if (!row) return '必修';
+    return ({ '英语':'英语', '体育':'体育', '艺术修养':'通识', '通识选修':'通识' })[row.module] || '必修';
+  }
+  function clsEligible(clsName, row){
+    if (!clsName || !row || !row.cls || !row.cls.length) return true;   // 未填班级/手册未列明 → 视为开放
+    return row.cls.indexOf(clsName) >= 0;
+  }
+  function slotTextOf(row){
+    var m = row.times ? row.times.match(/星期([一二三四五六日天])\s*(\d{1,2}-\d{1,2})/) : null;
+    return m ? '星期' + m[1] + ' ' + m[2] + ' 节' : '';
+  }
+
+  /* ---------- 心愿单 ---------- */
+  var state = { version: 2, updatedAt: new Date().toISOString(), items: [] };
+  function load(){ try { var o = JSON.parse(localStorage.getItem(KEY) || 'null'); if (o && Array.isArray(o.items)) state = o; } catch(e){} }
+  function save(){ state.updatedAt = new Date().toISOString(); localStorage.setItem(KEY, JSON.stringify(state)); renderAll(); }
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+  load();
+
+  /* ---------- 表单引用 ---------- */
+  var form = $('form'), f_id = $('f_id'), f_name = $('f_name'), f_code = $('f_code'), f_prio = $('f_prio'),
+      f_type = $('f_type'), f_status = $('f_status'), f_time = $('f_time'), f_note = $('f_note');
+  var onlyElig = $('f_elig');
+
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function typeTag(t){ var m = { '必修':'t-must','体育':'t-sport','英语':'t-eng','通识':'t-gen','选修':'t-elec','其他':'t-elec' }; return '<span class="tag ' + (m[t]||'t-elec') + '">' + esc(t) + '</span>'; }
+  function eligTag(ok){ return ok ? '<span class="tag t-ok">✓ 可</span>' : '<span class="tag t-no">✗ 不可</span>'; }
+  function cleanNum(s){ return String(s || '').replace(/^0+/, ''); }
+  function findRow(snOrCode){
+    if (!CAT) return null;
+    var q = cleanNum(snOrCode);
+    for (var i = 0; i < CAT.courses.length; i++){
+      var c = CAT.courses[i];
+      if (q.length >= 10 && cleanNum(c.sn) === q) return c;
+      if (q.length === 6 && c.code === snOrCode) return c;
+    }
+    return null;
+  }
+
+  /* ---------- 渲染 ---------- */
+  function renderBanner(){
+    var h = $('banner_holder');
+    if (!profile || !profile.cls) {
+      h.innerHTML = '<div class="banner">请先在①填写你的专业班级(如 26国会ACCA),助手才能按《选课手册》自动标出可选/不可选班次。填写内容仅存本机浏览器。</div>';
+      return;
+    }
+    var engSlot = [], spoSlot = [];
+    if (CAT) CAT.courses.forEach(function(c){
+      if (c.cls && c.cls.indexOf(profile.cls) >= 0){
+        if (c.module === '英语') engSlot.push(slotTextOf(c));
+        if (c.module === '体育') spoSlot.push(slotTextOf(c));
+      }
+    });
+    engSlot = engSlot.filter(function(v,i,a){ return a.indexOf(v) === i; }).join('、');
+    spoSlot = spoSlot.filter(function(v,i,a){ return a.indexOf(v) === i; }).join('、');
+    h.innerHTML = '<div class="banner ok">当前班级:<b>' + esc(profile.cls) + '</b>' +
+      (profile.name ? ' · ' + esc(profile.name) : '') +
+      (profile.no ? ' · 学号 ' + esc(profile.no) : '') +
+      (engSlot ? ' | 你的英语可选时段:' + esc(engSlot) : '') +
+      (spoSlot ? ' | 你的体育可选时段:' + esc(spoSlot) : '') +
+      ' <span style="color:#9ca3af">(按手册,以系统为准)</span></div>';
+  }
 
   function visibleItems(){
-    var fl=$('f_filter').value, q=($('f_q').value||'').trim().toLowerCase();
+    var fl = $('f_filter').value, q = ($('f_q').value || '').trim().toLowerCase();
     return state.items.filter(function(it){
-      if(fl!=='all' && it.status!==fl) return false;
-      if(q && (it.name||'').toLowerCase().indexOf(q)<0 && (it.code||'').toLowerCase().indexOf(q)<0) return false;
+      if (fl !== 'all' && it.status !== fl) return false;
+      if (q && it.name.toLowerCase().indexOf(q) < 0 && it.code.toLowerCase().indexOf(q) < 0) return false;
+      if (onlyElig.checked && profile && profile.cls){
+        var r = findRow(it.code);
+        if (r && !clsEligible(profile.cls, r)) return false;
+      }
       return true;
-    }).sort(function(a,b){ return (a.status===b.status ? (a.prio-b.prio || (a.name<b.name?-1:1)) : (a.status==='main'?-1:1)); });
+    }).sort(function(a,b){ return a.status === b.status ? (a.prio - b.prio || (a.name < b.name ? -1 : 1)) : (a.status === 'main' ? -1 : 1); });
   }
 
-  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
   function render(){
-    var list=visibleItems();
-    $('empty').hidden=list.length>0;
-    $('stats').textContent='共 '+state.items.length+' 门:主选 '+state.items.filter(function(i){return i.status==='main';}).length+
-      ' / 备选 '+state.items.filter(function(i){return i.status==='backup';}).length+' · 更新 '+new Date(state.updatedAt).toLocaleString();
-    var tb=$('tbody'); tb.innerHTML='';
-    list.forEach(function(it,idx){
-      var tr=document.createElement('tr');
-      tr.innerHTML='<td>'+(idx+1)+'</td>'+
-        '<td><b>'+esc(it.name)+'</b>'+(it.note?'<br><span style="color:#9ca3af;font-size:12px">'+esc(it.note)+'</span>':'')+'</td>'+
-        '<td><code>'+esc(it.code)+'</code></td>'+
-        '<td class="prio" style="color:'+(it.prio<=1?'#b91c1c':it.prio<=2?'#d97706':'#1f2937')+'">'+it.prio+'</td>'+
-        '<td>'+typeTag(it.type)+'</td><td>'+statusTag(it.status)+'</td>'+
-        '<td style="font-size:12px">'+esc(it.time||'-')+'</td>'+
-        '<td style="white-space:nowrap">'+
-          '<button class="b-ghost" data-act="up">↑</button> '+
-          '<button class="b-ghost" data-act="down">↓</button> '+
-          '<button class="b-ghost" data-act="edit">编辑</button> '+
-          '<button class="b-danger" data-act="del">删</button></td>';
-      tr._it=it; tb.appendChild(tr);
+    var list = visibleItems();
+    $('empty').hidden = list.length > 0;
+    $('stats').textContent = '共 ' + state.items.length + ' 门:主选 ' + state.items.filter(function(i){return i.status==='main';}).length +
+      ' / 备选 ' + state.items.filter(function(i){return i.status==='backup';}).length + ' · 更新 ' + new Date(state.updatedAt).toLocaleTimeString();
+    var tb = $('tbody'); tb.innerHTML = '';
+    list.forEach(function(it, idx){
+      var r = findRow(it.code);
+      var ok = true, reason = '';
+      if (r && profile && profile.cls){ ok = clsEligible(profile.cls, r); reason = ok ? '你的班级在该班次名单内' : '手册名单不含你的班级'; }
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + (idx + 1) + '</td>' +
+        '<td><b>' + esc(it.name) + '</b>' + (it.note ? '<br><span style="color:#9ca3af;font-size:11px">' + esc(it.note) + '</span>' : '') + '</td>' +
+        '<td><code>' + esc(it.code) + '</code>' + (r ? '<br><span style="color:#9ca3af;font-size:11px">代码 ' + esc(r.code) + '</span>' : '') + '</td>' +
+        '<td class="prio" style="color:' + (it.prio <= 1 ? '#b91c1c' : it.prio <= 2 ? '#d97706' : '#1f2937') + '">' + it.prio + '</td>' +
+        '<td>' + typeTag(it.type) + '</td><td>' + (it.status === 'main' ? '<span class="tag t-main">主选</span>' : '<span class="tag t-back">备选</span>') + '</td>' +
+        '<td style="font-size:11px">' + esc(it.time || '-') + '</td>' +
+        '<td>' + (r && profile && profile.cls ? eligTag(ok) + '<span style="font-size:11px;color:#9ca3af;display:block">' + esc(reason) + '</span>' : '<span style="color:#9ca3af;font-size:11px">未判定</span>') + '</td>' +
+        '<td style="white-space:nowrap">' +
+          '<button class="b-ghost" data-act="up">↑</button> <button class="b-ghost" data-act="down">↓</button> ' +
+          '<button class="b-ghost" data-act="edit">编辑</button> <button class="b-danger" data-act="del">删</button></td>';
+      tr._it = it; tb.appendChild(tr);
     });
     tb.querySelectorAll('button').forEach(function(btn){
-      btn.addEventListener('click',function(){
-        var tr=btn.closest('tr'), it=tr?tr._it:null; if(!it) return;
-        var act=btn.getAttribute('data-act');
-        if(act==='up'||act==='down'){
-          var arr=state.items; var i=arr.indexOf(it), j=act==='up'?i-1:i+1;
-          if(j<0||j>=arr.length) return;
+      btn.addEventListener('click', function(){
+        var tr = btn.closest('tr'), it = tr ? tr._it : null; if (!it) return;
+        var act = btn.getAttribute('data-act');
+        if (act === 'up' || act === 'down'){
+          var arr = state.items, i = arr.indexOf(it), j = act === 'up' ? i - 1 : i + 1;
+          if (j < 0 || j >= arr.length) return;
           arr.splice(i,1); arr.splice(j,0,it); save();
-        } else if(act==='edit'){
-          f_id.value=it.id; f_name.value=it.name; f_code.value=it.code; f_prio.value=it.prio;
-          f_type.value=it.type||'其他'; f_status.value=it.status; f_time.value=it.time||''; f_note.value=it.note||'';
-          $('btn_submit').textContent='保存修改'; $('btn_reset').hidden=false;
-          window.scrollTo({top:0,behavior:'smooth'});
-        } else if(act==='del'){
-          if(confirm('删除「'+it.name+'」?')){ state.items=state.items.filter(function(x){return x.id!==it.id;}); save(); }
+        } else if (act === 'edit'){
+          f_id.value = it.id; f_name.value = it.name; f_code.value = it.code; f_prio.value = it.prio;
+          f_type.value = it.type || '其他'; f_status.value = it.status; f_time.value = it.time || ''; f_note.value = it.note || '';
+          $('btn_submit').textContent = '保存修改'; $('btn_reset').hidden = false;
+          window.scrollTo({top:0, behavior:'smooth'});
+        } else if (act === 'del'){
+          if (confirm('删除「' + it.name + '」?')){ state.items = state.items.filter(function(x){return x.id !== it.id;}); save(); }
         }
       });
     });
   }
+  function renderAll(){ renderBanner(); render(); }
 
-  form.addEventListener('submit',function(e){
-    e.preventDefault();
-    var code=f_code.value.trim(); if(!code){ alert('课程序号不能为空'); return; }
-    var id=f_id.value;
-    var obj={ id:id||uid(), name:f_name.value.trim()||code, code:code, prio:parseInt(f_prio.value,10)||3,
-              type:f_type.value, status:f_status.value==='backup'?'backup':'main',
-              time:f_time.value.trim(), note:f_note.value.trim() };
-    if(id){ var hit=state.items.find(function(x){return x.id===id;}); if(hit) Object.assign(hit,obj); }
-    else state.items.push(obj);
-    form.reset(); f_id.value=''; $('btn_submit').textContent='添加'; $('btn_reset').hidden=true;
-    save();
+  /* ---------- 个人信息 ---------- */
+  function fillProfileForm(){ if (profile){ $('p_name').value = profile.name || ''; $('p_no').value = profile.no || ''; $('p_cls').value = profile.cls || ''; } }
+  $('p_save').addEventListener('click', function(){
+    var cls = $('p_cls').value.trim();
+    if (!cls){ alert('请选择或填写专业班级,例如 26国会ACCA'); return; }
+    profile = { name: $('p_name').value.trim(), no: $('p_no').value.trim(), cls: cls };
+    saveProfile(profile); fillProfileForm(); closeModal(); alert('已保存(仅存本机)。英语/体育班次资格已按手册更新。');
   });
-
-  $('btn_reset').addEventListener('click',function(){
-    form.reset(); f_id.value=''; $('btn_submit').textContent='添加'; this.hidden=true;
+  $('p_clear').addEventListener('click', function(){
+    if (!confirm('清除个人信息?')) return;
+    profile = null; localStorage.removeItem(PKEY);
+    $('p_name').value = ''; $('p_no').value = ''; $('p_cls').value = '';
+    renderAll();
   });
-
-  function exportText(){ return JSON.stringify({version:1,updatedAt:state.updatedAt,items:state.items},null,2); }
-
-  $('btn_export').addEventListener('click',function(){
-    $('io_box').value=exportText();
-    var blob=new Blob([exportText()],{type:'application/json'});
-    var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-    a.download='上财选课心愿单-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
-    setTimeout(function(){URL.revokeObjectURL(a.href);},800);
-  });
-  $('btn_export2').addEventListener('click',function(){ $('io_box').value=exportText(); });
-
-  function importJSON(text){
-    try{
-      var o=JSON.parse(text);
-      var arr=Array.isArray(o)?o:(o&&Array.isArray(o.items)?o.items:null);
-      if(!arr) throw new Error('无法识别为心愿单 JSON');
-      var before=state.items.length, added=0;
-      arr.forEach(function(it){
-        if(!it||!it.code) return;
-        var code=String(it.code);
-        if(state.items.some(function(x){return x.code===code;})) return;
-        state.items.push({ id:uid(), name:(it.name||code), code:code,
-          prio:parseInt(it.prio,10)||3, type:it.type||'其他', status:(it.status==='backup'?'backup':'main'),
-          time:it.time||'', note:it.note||'' });
-        added++;
-      });
-      save();
-      alert('本次新增 '+added+' 门(原有 '+before+' 门保留)。如需整体替换,请先“清空全部”。');
-    }catch(err){ alert('导入失败:'+err.message); }
+  $('profile_chip').addEventListener('click', function(){ openModal(); });
+  function updateChip(){
+    var c = $('profile_chip');
+    if (profile && profile.cls) c.textContent = (profile.cls) + (profile.name ? ' · ' + profile.name : '') + ' (点击修改)';
+    else c.textContent = '未填写个人信息 → 填写(用于筛选)';
   }
-  $('btn_import').addEventListener('click',function(){ var t=prompt('把心愿单 JSON 粘贴到这里(从备份或导出内容复制)'); if(t) importJSON(t); });
-  $('btn_import2').addEventListener('click',function(){ importJSON($('io_box').value); });
-
-  $('btn_copy').addEventListener('click',function(){
-    var main=state.items.filter(function(i){return i.status==='main';}).map(function(i){return i.code;});
-    var back=state.items.filter(function(i){return i.status==='backup';}).map(function(i){return i.code;});
-    var txt='【主选】\n'+main.join('\n')+'\n\n【备选】\n'+back.join('\n');
-    function fallback(){
-      var ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select();
-      try{ document.execCommand('copy'); alert('已复制课程序号清单,可粘贴到选课系统搜索框。'); }
-      catch(e){ $('io_box').value=txt; alert('自动复制被浏览器拦截,请手动复制下方文本框内容。'); }
-      document.body.removeChild(ta);
-    }
-    if(navigator.clipboard&&navigator.clipboard.writeText){
-      navigator.clipboard.writeText(txt).then(function(){ alert('已复制课程序号清单,可粘贴到选课系统搜索框。'); },fallback);
-    } else fallback();
-  });
-
-  $('btn_clear').addEventListener('click',function(){
-    if(confirm('确定清空全部课程?可先“导出 JSON”备份。')){ state.items=[]; save(); }
-  });
-
-  $('f_filter').addEventListener('change',render);
-  $('f_q').addEventListener('input',render);
-
-  /* ========== 课程目录自动补全(catalog.json ← 附件3 2026级新生选课手册) ========== */
-  var CAT = null, hits = [], qTimer = null;
-  var typeTagName = { '英语':'英语', '体育':'体育', '艺术修养':'通识', '通识选修':'通识' };
-  function typeOf(row){ return typeTagName[row.module] || '必修'; }
-
-  function loadCatalog(){
-    var st = $('cat_state');
-    fetch('catalog.json?t=' + Date.now())
-      .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-      .then(function(d){
-        CAT = (d && Array.isArray(d.courses)) ? d.courses : null;
-        st.textContent = CAT ? ('目录已加载:' + CAT.length + ' 个班次') : '目录为空';
-      })
-      .catch(function(){ CAT = null; st.textContent = '课程目录未找到:网页需与 catalog.json 在同一目录(或使用在线版)'; });
+  function openModal(){
+    var mask = document.createElement('div'); mask.className = 'modal-mask';
+    mask.innerHTML = '<div class="modal"><h2>你的专业班级?</h2><p>填写后,助手按《2026级新生选课手册》判断英语/体育班次是否对你开放(如 26国会ACCA 只能在星期二 3-4 的英语班次中选择)。信息只保存在本机浏览器,不会上传。</p>' +
+      '<div class="row"><label class="sm" style="flex:1">专业班级<input type="text" id="m_cls" list="cls_list" placeholder="例如:26国会ACCA"></label></div>' +
+      '<div class="row"><label class="sm" style="flex:1">姓名(选填)<input type="text" id="m_name"></label><label class="sm" style="flex:1">学号(选填)<input type="text" id="m_no" placeholder="如 2026111149"></label></div>' +
+      '<div class="row"><button class="b-main" id="m_save">保存</button><button class="b-ghost" id="m_skip">暂不填写</button></div></div>';
+    document.body.appendChild(mask);
+    if (profile){ mask.querySelector('#m_cls').value = profile.cls; mask.querySelector('#m_name').value = profile.name || ''; mask.querySelector('#m_no').value = profile.no || ''; }
+    mask.querySelector('#m_save').addEventListener('click', function(){
+      var cls = mask.querySelector('#m_cls').value.trim();
+      if (!cls){ alert('请填写专业班级(如 26国会ACCA)'); return; }
+      profile = { name: mask.querySelector('#m_name').value.trim(), no: mask.querySelector('#m_no').value.trim(), cls: cls };
+      saveProfile(profile); fillProfileForm(); closeModal(); renderAll();
+    });
+    mask.querySelector('#m_skip').addEventListener('click', closeModal);
   }
+  function closeModal(){ var m = document.querySelector('.modal-mask'); if (m) m.remove(); }
+  if (!profile) openModal();
 
-  function cleanNum(s){ return String(s||'').replace(/^0+/,''); }
-
+  /* ---------- 目录联想与自动补全 ---------- */
+  var hits = [], qTimer = null;
   function queryCatalog(q){
-    if(!CAT || q.length < 3) return [];
-    var qq = cleanNum(q);
-    var out = [];
-    CAT.forEach(function(c){
+    if (!CAT || q.length < 3) return [];
+    var qq = cleanNum(q), out = [];
+    CAT.courses.forEach(function(c){
       var c6 = cleanNum(c.code), s10 = cleanNum(c.sn);
-      if(qq.length >= 6 && c6 === qq) return out.push(c);
-      if(s10.indexOf(qq) === 0) return out.push(c);
-      if(qq.length >= 4 && c6.indexOf(qq) === 0) return out.push(c);
+      if (qq.length >= 6 && c6 === qq) return out.push(c);
+      if (s10.indexOf(qq) === 0) return out.push(c);
+      if (qq.length >= 4 && c6.indexOf(qq) === 0) return out.push(c);
     });
     return out.slice(0, 20);
   }
-
-  function fillByCatalog(row){
-    if(!row) return;
-    f_name.value = row.name;
-    f_code.value = row.sn;                       // 表单"课程序号"=手册中的 10 位序号
-    f_type.value = typeOf(row);
+  function eligibilityOf(row){
+    var ok = true, why = '';
+    if (row && profile && profile.cls && row.cls && row.cls.length){
+      ok = row.cls.indexOf(profile.cls) >= 0;
+      why = ok ? '你的班级在该时段/名单内' : (row.module === '英语' || row.module === '体育' ? '手册名单不含你的班级(时段或名单不符)' : '');
+    } else if (row && row.module === '艺术修养'){
+      ok = false; why = '本学期新生不可选(毕业前需修满2学分)';
+    }
+    return { ok: ok, why: why };
+  }
+  function fillByCatalog(row, opts){
+    opts = opts || {}; if (!row) return;
+    var el = eligibilityOf(row);
+    f_name.value = row.name; f_code.value = row.sn; f_type.value = typeOf(row);
     var parts = [];
-    if(row.code) parts.push('课程代码 ' + row.code);
-    if(row.category) parts.push(row.category);
-    if(row.credit) parts.push(row.credit + ' 学分');
-    if(row.gender) parts.push('限' + row.gender + '生');
-    if(row.limit) parts.push('上限 ' + row.limit + ' 人');
-    if(row.teacher) parts.push('教师:' + row.teacher);
-    if(row.note) parts.push(row.note);
+    if (row.code) parts.push('代码 ' + row.code);
+    if (row.category) parts.push(row.category);
+    if (row.credit) parts.push(row.credit + ' 学分');
+    if (row.gender) parts.push('限' + row.gender + '生');
+    if (row.limit) parts.push('上限 ' + row.limit + ' 人');
+    if (row.teacher) parts.push('教师:' + row.teacher);
+    if (row.note) parts.push(row.note);
     f_note.value = parts.join(' · ');
     f_time.value = (row.times || '').slice(0, 220);
     f_id.value = ''; $('btn_submit').textContent = '添加'; $('btn_reset').hidden = true;
-    $('f_qcode').value = ''; $('cat_results').innerHTML = '';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    $('cat_results').innerHTML = '';
+    if (opts.msg) $('cat_state').textContent = opts.msg;
+    if (!opts.noscroll) window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-
-  function renderHits(q){
+  function renderHitsList(q){
     var box = $('cat_results');
-    if(!CAT){ box.innerHTML = '<div class="cat-empty">目录未加载,无法联想</div>'; return; }
+    if (!CAT){ box.innerHTML = '<div class="cat-empty">课程目录未加载…</div>'; return; }
     hits = queryCatalog(q);
-    if(!hits.length){ box.innerHTML = '<div class="cat-empty">未找到匹配课程。可输入 6 位课程代码(如 105369)或 10 位课程序号(手册中的数字列)</div>'; return; }
+    if (!hits.length){ box.innerHTML = '<div class="cat-empty">未找到匹配课程:输 6 位课程代码(如 105369)或 10 位课程序号(手册数字列)</div>'; return; }
+    var byCode = {};
+    hits.forEach(function(c){ byCode[c.code] = (byCode[c.code] || 0) + 1; });
     box.innerHTML = hits.map(function(c, i){
-      var tag = typeOf(c);
-      var firstT = (c.times || '').split('|')[0].trim();
+      var el = eligibilityOf(c);
       var meta = ['序号 ' + c.sn, '代码 ' + c.code].join(' · ') + (c.credit ? ' · ' + c.credit + ' 学分' : '') +
         (c.category ? ' · ' + c.category : '') + (c.gender ? ' · ' + c.gender : '') +
-        (c.limit ? ' · 上限' + c.limit + '人' : '') + (c.teacher ? ' · ' + c.teacher : '') + (firstT ? ' · ' + firstT : '');
-      return '<div class="cat-hit" data-i="' + i + '"><b>' + esc(c.name) + '</b> <span class="tag ' +
-        (c.module === '英语' ? 't-eng' : c.module === '体育' ? 't-sport' : c.module === '艺术修养' ? 't-gen' : c.module === '通识选修' ? 't-elec' : 't-must') + '">' + esc(tag) + '</span>' +
-        (c.module === '艺术修养' ? '<span style="color:#b45309;font-size:11px">(本学期新生不可选)</span>' : '') +
+        (c.teacher ? ' · ' + c.teacher : '') + (slotTextOf(c) ? ' · ' + slotTextOf(c) : '');
+      return '<div class="cat-hit' + (el.ok ? '' : ' no') + '" data-i="' + i + '" style="' + (el.ok ? '' : 'border-color:#fecaca;background:#fef2f2;cursor:not-allowed') + '">' +
+        '<b>' + esc(c.name) + '</b> ' + eligTag(el.ok) + ' <span class="tag ' +
+        (c.module === '英语' ? 't-eng' : c.module === '体育' ? 't-sport' : c.module === '艺术修养' ? 't-gen' : c.module === '通识选修' ? 't-elec' : 't-must') + '">' + esc(typeOf(c)) + '</span>' +
+        (byCode[c.code] > 1 ? '<span style="color:#d97706;font-size:11px"> 该代码 ' + byCode[c.code] + ' 个班次</span>' : '') +
+        (el.why ? '<span style="font-size:11px;color:#b91c1c;margin-left:6px">' + esc(el.why) + '</span>' : '') +
         '<div class="meta">' + esc(meta) + '</div></div>';
     }).join('');
-    box.querySelectorAll('.cat-hit').forEach(function(el){
-      el.addEventListener('click', function(){ fillByCatalog(hits[+el.getAttribute('data-i')]); });
+    box.querySelectorAll('.cat-hit').forEach(function(el2){
+      el2.addEventListener('click', function(){
+        var it = hits[+el2.getAttribute('data-i')];
+        var el = eligibilityOf(it);
+        if (!el.ok && onlyElig.checked && profile && profile.cls){
+          alert('该班次按手册不含你的班级' + (el.why ? '(' + el.why + ')' : '') + '\n\n若确实要选:①确认班级填对;②取消勾选"只显示我班级可选的"后仍可手动添加(以系统为准)。');
+          return;
+        }
+        fillByCatalog(it, { msg: '✓ 已填入:' + it.name });
+      });
     });
   }
+  function onCatQuery(q){
+    if (!q){ $('cat_results').innerHTML = ''; return; }
+    hits = queryCatalog(q);
+    var qq = cleanNum(q);
+    if ((/^\d{6}$/.test(q) || /^\d{10}$/.test(q)) && hits.length === 1){
+      var el = eligibilityOf(hits[0]);
+      if (!el.ok && onlyElig.checked && profile && profile.cls){
+        renderHitsList(q); return;
+      }
+      fillByCatalog(hits[0], { msg: '✓ 已自动补全:' + hits[0].name + (el.ok ? '' : '(注意:按手册不可选)'), noscroll: true });
+      return;
+    }
+    renderHitsList(q);
+  }
+  function bindCatInput(el){
+    el.addEventListener('input', function(){
+      clearTimeout(qTimer);
+      var q = this.value.trim();
+      qTimer = setTimeout(function(){ onCatQuery(q); }, 120);
+    });
+    el.addEventListener('keydown', function(e){
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      var q = this.value.trim();
+      hits = queryCatalog(q);
+      if (hits.length >= 1){ fillByCatalog(hits[0], { msg: '✓ 已填入第一个匹配' }); }
+      else renderHitsList(q);
+    });
+  }
+  bindCatInput($('f_qcode'));
+  bindCatInput(f_code);
 
-  $('f_qcode').addEventListener('input', function(){
-    clearTimeout(qTimer);
-    var q = this.value.trim();
-    qTimer = setTimeout(function(){ renderHits(q); }, 140);
+  /* ---------- 提交 ---------- */
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var code = f_code.value.trim(); if (!code){ alert('课程序号不能为空'); return; }
+    var row = findRow(code);
+    var el = row ? eligibilityOf(row) : { ok: true, why: '' };
+    if (!el.ok && onlyElig.checked && profile && profile.cls){
+      if (!confirm('按《选课手册》该班次不含你的班级(' + profile.cls + ')。\n仍要加入心愿单吗?(建议先核对班级,最终以系统为准)')) return;
+    }
+    /* 只填了编号时,从目录补全缺失信息 */
+    if (row){
+      if (!f_name.value.trim() || f_name.value.trim() === code) f_name.value = row.name;
+      if (!f_type.value || f_type.value === '其他') f_type.value = typeOf(row);
+      if (!f_note.value.trim()){
+        var bp = [];
+        if (row.code) bp.push('代码 ' + row.code);
+        if (row.category) bp.push(row.category);
+        if (row.credit) bp.push(row.credit + ' 学分');
+        if (row.gender) bp.push('限' + row.gender + '生');
+        if (row.limit) bp.push('上限 ' + row.limit + ' 人');
+        if (row.teacher) bp.push('教师:' + row.teacher);
+        f_note.value = bp.join(' · ');
+      }
+      if (!f_time.value.trim()) f_time.value = (row.times || '').slice(0, 220);
+    }
+    var id = f_id.value;
+    var obj = { id: id || uid(), name: f_name.value.trim() || code, code: code, prio: parseInt(f_prio.value, 10) || 3,
+      type: f_type.value, status: f_status.value === 'backup' ? 'backup' : 'main',
+      time: f_time.value.trim(), note: f_note.value.trim() };
+    if (id){ var hit = state.items.find(function(x){ return x.id === id; }); if (hit) Object.assign(hit, obj); }
+    else state.items.push(obj);
+    form.reset(); f_id.value = ''; $('btn_submit').textContent = '添加'; $('btn_reset').hidden = true;
+    save();
+  });
+  $('btn_reset').addEventListener('click', function(){
+    form.reset(); f_id.value = ''; $('btn_submit').textContent = '添加'; this.hidden = true;
   });
 
-  render();
-  loadCatalog();
+  /* ---------- 导入导出 ---------- */
+  function exportText(){ return JSON.stringify(state, null, 2); }
+  $('btn_export').addEventListener('click', function(){
+    $('io_box').value = exportText();
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([exportText()], { type: 'application/json' }));
+    a.download = '上财选课心愿单-' + new Date().toISOString().slice(0,10) + '.json'; a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 800);
+  });
+  $('btn_export2').addEventListener('click', function(){ $('io_box').value = exportText(); });
+  function importJSON(text){
+    try{
+      var o = JSON.parse(text);
+      var arr = Array.isArray(o) ? o : (o && Array.isArray(o.items) ? o.items : null);
+      if (!arr) throw new Error('无法识别');
+      var before = state.items.length, added = 0;
+      arr.forEach(function(it){
+        if (!it || !it.code) return;
+        var code = String(it.code);
+        if (state.items.some(function(x){ return x.code === code; })) return;
+        state.items.push({ id: uid(), name: it.name || code, code: code, prio: parseInt(it.prio,10) || 3,
+          type: it.type || '其他', status: it.status === 'backup' ? 'backup' : 'main',
+          time: it.time || '', note: it.note || '' });
+        added++;
+      });
+      save();
+      alert('新增 ' + added + ' 门(原有 ' + before + ' 门保留)。');
+    } catch(err){ alert('导入失败:' + err.message); }
+  }
+  $('btn_import').addEventListener('click', function(){ var t = prompt('粘贴心愿单 JSON:'); if (t) importJSON(t); });
+  $('btn_import2').addEventListener('click', function(){ importJSON($('io_box').value); });
+  $('btn_copy').addEventListener('click', function(){
+    var main = state.items.filter(function(i){return i.status==='main';}).map(function(i){return i.code;});
+    var back = state.items.filter(function(i){return i.status==='backup';}).map(function(i){return i.code;});
+    var txt = '【主选】\n' + main.join('\n') + '\n\n【备选】\n' + back.join('\n');
+    function fallback(){
+      var ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); alert('已复制课程序号清单'); }
+      catch(e){ $('io_box').value = txt; alert('请手动复制下方文本框内容'); }
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(function(){ alert('已复制课程序号清单'); }, fallback); }
+    else fallback();
+  });
+  $('btn_clear').addEventListener('click', function(){
+    if (confirm('确定清空全部课程?可先导出备份。')){ state.items = []; save(); }
+  });
+
+  /* ---------- 班级下拉 ---------- */
+  function fillClsList(){
+    var dl = $('cls_list'); dl.innerHTML = '';
+    var list = [];
+    if (CAT && CAT.classList) list = CAT.classList.slice();
+    list.sort();
+    list.forEach(function(n){ var o = document.createElement('option'); o.value = n; dl.appendChild(o); });
+  }
+
+  /* ---------- 事件 ---------- */
+  $('f_filter').addEventListener('change', render);
+  $('f_q').addEventListener('input', render);
+  onlyElig.addEventListener('change', render);
+
+  loadCat(function(){
+    $('cat_state').textContent = CAT ? ('课程目录:' + CAT.courses.length + ' 个班次') : '课程目录未加载';
+    fillClsList();
+    updateChip();
+    renderBanner();
+  });
+  updateChip();
+  renderBanner();
 })();
 </script>
 </body>
