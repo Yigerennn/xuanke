@@ -40,6 +40,10 @@
   .stats { font-size:12px; color:#6b7280; margin-left:auto; }
   .note { background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; padding:10px 12px; font-size:12px; color:#9a3412; line-height:1.7; }
   a { color:var(--main); }
+  .cat-hit { border:1px solid var(--line); border-radius:8px; padding:7px 10px; margin-bottom:6px; cursor:pointer; font-size:13px; }
+  .cat-hit:hover { border-color:var(--main); background:#fdf2f2; }
+  .cat-hit .meta { color:#6b7280; font-size:12px; margin-top:2px; word-break:break-all; }
+  .cat-empty { color:#9ca3af; font-size:12px; padding:8px 2px; }
 </style>
 </head>
 <body>
@@ -79,6 +83,15 @@
         <button type="button" class="b-ghost" id="btn_reset" hidden>取消编辑</button>
       </div>
     </form>
+
+    <h2 style="margin-top:16px">从《2026级新生选课手册》自动补全</h2>
+    <div class="row">
+      <label class="sm" style="flex:1">输入课程代码(6 位,如 105369)或课程序号(10 位),点结果自动填入上方表单
+        <input type="text" id="f_qcode" placeholder="例如:105369(体育I足球) / 108367(英语) / 106001(卫生保健)" style="width:100%">
+      </label>
+      <span id="cat_state" style="font-size:12px;color:#9ca3af"></span>
+    </div>
+    <div id="cat_results" style="margin-top:8px;max-height:280px;overflow:auto"></div>
   </div>
 
   <div class="card">
@@ -263,7 +276,86 @@
   $('f_filter').addEventListener('change',render);
   $('f_q').addEventListener('input',render);
 
+  /* ========== 课程目录自动补全(catalog.json ← 附件3 2026级新生选课手册) ========== */
+  var CAT = null, hits = [], qTimer = null;
+  var typeTagName = { '英语':'英语', '体育':'体育', '艺术修养':'通识', '通识选修':'通识' };
+  function typeOf(row){ return typeTagName[row.module] || '必修'; }
+
+  function loadCatalog(){
+    var st = $('cat_state');
+    fetch('catalog.json?t=' + Date.now())
+      .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(function(d){
+        CAT = (d && Array.isArray(d.courses)) ? d.courses : null;
+        st.textContent = CAT ? ('目录已加载:' + CAT.length + ' 个班次') : '目录为空';
+      })
+      .catch(function(){ CAT = null; st.textContent = '课程目录未找到:网页需与 catalog.json 在同一目录(或使用在线版)'; });
+  }
+
+  function cleanNum(s){ return String(s||'').replace(/^0+/,''); }
+
+  function queryCatalog(q){
+    if(!CAT || q.length < 3) return [];
+    var qq = cleanNum(q);
+    var out = [];
+    CAT.forEach(function(c){
+      var c6 = cleanNum(c.code), s10 = cleanNum(c.sn);
+      if(qq.length >= 6 && c6 === qq) return out.push(c);
+      if(s10.indexOf(qq) === 0) return out.push(c);
+      if(qq.length >= 4 && c6.indexOf(qq) === 0) return out.push(c);
+    });
+    return out.slice(0, 20);
+  }
+
+  function fillByCatalog(row){
+    if(!row) return;
+    f_name.value = row.name;
+    f_code.value = row.sn;                       // 表单"课程序号"=手册中的 10 位序号
+    f_type.value = typeOf(row);
+    var parts = [];
+    if(row.code) parts.push('课程代码 ' + row.code);
+    if(row.category) parts.push(row.category);
+    if(row.credit) parts.push(row.credit + ' 学分');
+    if(row.gender) parts.push('限' + row.gender + '生');
+    if(row.limit) parts.push('上限 ' + row.limit + ' 人');
+    if(row.teacher) parts.push('教师:' + row.teacher);
+    if(row.note) parts.push(row.note);
+    f_note.value = parts.join(' · ');
+    f_time.value = (row.times || '').slice(0, 220);
+    f_id.value = ''; $('btn_submit').textContent = '添加'; $('btn_reset').hidden = true;
+    $('f_qcode').value = ''; $('cat_results').innerHTML = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function renderHits(q){
+    var box = $('cat_results');
+    if(!CAT){ box.innerHTML = '<div class="cat-empty">目录未加载,无法联想</div>'; return; }
+    hits = queryCatalog(q);
+    if(!hits.length){ box.innerHTML = '<div class="cat-empty">未找到匹配课程。可输入 6 位课程代码(如 105369)或 10 位课程序号(手册中的数字列)</div>'; return; }
+    box.innerHTML = hits.map(function(c, i){
+      var tag = typeOf(c);
+      var firstT = (c.times || '').split('|')[0].trim();
+      var meta = ['序号 ' + c.sn, '代码 ' + c.code].join(' · ') + (c.credit ? ' · ' + c.credit + ' 学分' : '') +
+        (c.category ? ' · ' + c.category : '') + (c.gender ? ' · ' + c.gender : '') +
+        (c.limit ? ' · 上限' + c.limit + '人' : '') + (c.teacher ? ' · ' + c.teacher : '') + (firstT ? ' · ' + firstT : '');
+      return '<div class="cat-hit" data-i="' + i + '"><b>' + esc(c.name) + '</b> <span class="tag ' +
+        (c.module === '英语' ? 't-eng' : c.module === '体育' ? 't-sport' : c.module === '艺术修养' ? 't-gen' : c.module === '通识选修' ? 't-elec' : 't-must') + '">' + esc(tag) + '</span>' +
+        (c.module === '艺术修养' ? '<span style="color:#b45309;font-size:11px">(本学期新生不可选)</span>' : '') +
+        '<div class="meta">' + esc(meta) + '</div></div>';
+    }).join('');
+    box.querySelectorAll('.cat-hit').forEach(function(el){
+      el.addEventListener('click', function(){ fillByCatalog(hits[+el.getAttribute('data-i')]); });
+    });
+  }
+
+  $('f_qcode').addEventListener('input', function(){
+    clearTimeout(qTimer);
+    var q = this.value.trim();
+    qTimer = setTimeout(function(){ renderHits(q); }, 140);
+  });
+
   render();
+  loadCatalog();
 })();
 </script>
 </body>
