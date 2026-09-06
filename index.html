@@ -89,7 +89,10 @@
   </div>
 
   <div class="card">
-    <h2>② 添加课程(输入编号自动补全)</h2>
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <h2 style="margin:0">② 添加课程(输入编号自动补全)</h2>
+      <button class="b-ok" id="btn_browse">📖 浏览我班可选的课 →</button>
+    </div>
     <div class="note" style="margin-bottom:10px">
       <b>用法:</b>在"课程序号 *"或下方查询框输入 <b>6 位课程代码</b>(如 105369)或 <b>10 位课程序号</b>(手册数字列):
       唯一匹配自动补全;多个班次(不同老师/时间)会列出候选,点选或按回车选第一个。绿色=你班级可选,红色=手册名单不含(需关闭筛选或确认后强加)。
@@ -529,10 +532,110 @@ window.CATDATA = {"v":2,"source":"附件3 2026级新生选课手册","generated"
     list.forEach(function(n){ var o = document.createElement('option'); o.value = n; dl.appendChild(o); });
   }
 
+  /* ---------- 浏览"我班可选课程" ---------- */
+  var MOD_ORDER = { '英语':0, '体育':1, '新生研讨课':2, '卫生保健':3, '思政选择性必修':4, '通识选修':5 };
+  var MODS = ['全部', '英语', '体育', '新生研讨课', '卫生保健', '思政选择性必修', '通识选修'];
+  var browseState = { mod: '全部', q: '' };
+
+  function addFromCatalog(row){
+    var bp = [];
+    if (row.code) bp.push('代码 ' + row.code);
+    if (row.category) bp.push(row.category);
+    if (row.credit) bp.push(row.credit + ' 学分');
+    if (row.gender) bp.push('限' + row.gender + '生');
+    if (row.limit) bp.push('上限 ' + row.limit + ' 人');
+    if (row.teacher) bp.push('教师:' + row.teacher);
+    state.items.push({ id: uid(), name: row.name, code: row.sn, prio: 2, type: typeOf(row), status: 'main',
+      time: (row.times || '').slice(0, 220), note: bp.join(' · ') });
+    save();
+  }
+
+  function openBrowse(){
+    if (!CAT){ alert('课程目录尚未加载,请稍后重试'); return; }
+    if (!profile || !profile.cls){ alert('请先在①填写你的专业班级(如 26国会ACCA),才能生成"我班可选"清单'); openModal(); return; }
+    var mask = document.createElement('div');
+    mask.className = 'modal-mask';
+    mask.style.alignItems = 'flex-start';
+    mask.style.padding = '24px 10px';
+    mask.innerHTML =
+      '<div class="modal" style="max-width:980px;width:96%;max-height:90vh;display:flex;flex-direction:column">' +
+        '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+          '<h2 style="margin:0">📖 我班(' + esc(profile.cls) + ')本学期可选课程</h2>' +
+          '<button class="b-ghost" id="b_close" style="margin-left:auto">关闭</button></div>' +
+        '<p style="margin:6px 0;font-size:12px;color:#1e40af;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 10px">' +
+          '依据《2026级新生选课手册》:英语/体育已按班级课表时段过滤(仅显示你班名单内的班次);' +
+          '新生研讨课(1学分,大一期间修)、卫生保健、思政选择性必修、通识选修对全体新生开放已全列;' +
+          '艺术修养类本学期新生不可选,已隐藏。仅供参考,以 9/10 教管系统为准。正式入口:<a href="https://portal.sufe.edu.cn" target="_blank" rel="noopener">上财门户 → 应用中心 → 教学 → 选课</a>。</p>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:4px 0 8px">' +
+          MODS.map(function(m){ return '<button class="bchip" data-m="' + m + '" style="padding:5px 11px;border:none;border-radius:16px;cursor:pointer;font-size:12px;background:' + (m === browseState.mod ? '#b02a37' : '#eef2f7') + ';color:' + (m === browseState.mod ? '#fff' : '#374151') + '">' + m + '</button>'; }).join('') +
+          '<input id="b_q" style="flex:1;min-width:170px" placeholder="搜索:课程名 / 课程序号 / 教师">' +
+          '<span id="b_cnt" style="font-size:12px;color:#6b7280"></span></div>' +
+        '<div id="b_list" style="overflow:auto;min-height:200px"></div></div>';
+    document.body.appendChild(mask);
+    mask.querySelector('#b_close').addEventListener('click', function(){ mask.remove(); });
+    mask.querySelectorAll('.bchip').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        browseState.mod = btn.getAttribute('data-m');
+        mask.querySelectorAll('.bchip').forEach(function(x){
+          x.style.background = x.getAttribute('data-m') === browseState.mod ? '#b02a37' : '#eef2f7';
+          x.style.color = x.getAttribute('data-m') === browseState.mod ? '#fff' : '#374151';
+        });
+        renderBrowseList(mask);
+      });
+    });
+    var qin = mask.querySelector('#b_q');
+    qin.addEventListener('input', function(){ browseState.q = this.value.trim(); renderBrowseList(mask); });
+    renderBrowseList(mask);
+  }
+
+  function renderBrowseList(mask){
+    var box = mask.querySelector('#b_list');
+    var q = browseState.q.toLowerCase();
+    var rows = CAT.courses.filter(function(c){
+      if (c.module === '艺术修养') return false;
+      if (browseState.mod !== '全部' && c.module !== browseState.mod) return false;
+      if (profile && profile.cls && (c.module === '英语' || c.module === '体育') && !clsEligible(profile.cls, c)) return false;
+      if (q){
+        var hay = (c.name + ' ' + c.sn + ' ' + c.code + ' ' + (c.teacher || '')).toLowerCase();
+        if (hay.indexOf(q) < 0) return false;
+      }
+      return true;
+    }).sort(function(a, b){
+      var m = (MOD_ORDER[a.module] !== undefined ? MOD_ORDER[a.module] : 9) - (MOD_ORDER[b.module] !== undefined ? MOD_ORDER[b.module] : 9);
+      return m !== 0 ? m : (a.code === b.code ? (a.sn < b.sn ? -1 : 1) : (a.code < b.code ? -1 : 1));
+    });
+    mask.querySelector('#b_cnt').textContent = '共 ' + rows.length + ' 个班次';
+    if (!rows.length){
+      box.innerHTML = '<div class="cat-empty">没有符合条件的课程(试试切换分类或清空搜索)</div>';
+      return;
+    }
+    var existed = {};
+    state.items.forEach(function(it){ existed[it.code] = true; });
+    box.innerHTML = '<table><thead><tr><th style="width:26%">课程(代码/序号)</th><th>类型</th><th>学分</th><th style="width:22%">教师</th><th style="width:18%">时间</th><th style="width:90px">操作</th></tr></thead><tbody>' +
+      rows.map(function(c, i){
+        var added = !!existed[c.sn];
+        return '<tr>' +
+          '<td><b>' + esc(c.name) + '</b><br><span style="font-size:11px;color:#9ca3af">代码 ' + esc(c.code) + ' · 序号 ' + esc(c.sn) + '</span></td>' +
+          '<td>' + typeTag(typeOf(c)) + (c.gender ? ' <span style="font-size:11px;color:#9ca3af">' + esc(c.gender) + '</span>' : '') + '</td>' +
+          '<td>' + esc(c.credit || '-') + (c.limit ? '<br><span style="font-size:11px;color:#9ca3af">限' + esc(c.limit) + '人</span>' : '') + '</td>' +
+          '<td style="font-size:12px">' + esc(c.teacher || '-') + '</td>' +
+          '<td style="font-size:11px">' + esc((slotTextOf(c) || (c.times || '').split('|')[0].trim() || '-')) + '</td>' +
+          '<td><button class="badd" data-i="' + i + '" style="padding:5px 10px;border:none;border-radius:6px;cursor:pointer;font-size:12px;background:' + (added ? '#e5e7eb' : '#16a34a') + ';color:' + (added ? '#6b7280' : '#fff') + '"' + (added ? ' disabled' : '') + '>' + (added ? '已加入' : '加入主选') + '</button></td></tr>';
+      }).join('') + '</tbody></table>';
+    box.querySelectorAll('.badd').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var c = rows[+btn.getAttribute('data-i')];
+        addFromCatalog(c);
+        btn.textContent = '已加入 ✓'; btn.disabled = true; btn.style.background = '#e5e7eb'; btn.style.color = '#6b7280';
+      });
+    });
+  }
+
   /* ---------- 事件 ---------- */
   $('f_filter').addEventListener('change', render);
   $('f_q').addEventListener('input', render);
   onlyElig.addEventListener('change', render);
+  $('btn_browse').addEventListener('click', openBrowse);
 
   loadCat(function(){
     $('cat_state').textContent = CAT ? ('课程目录:' + CAT.courses.length + ' 个班次') : '课程目录未加载';
