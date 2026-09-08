@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>上财选课心愿单 v1.3</title>
+<title>上财选课心愿单 v1.4</title>
 <style>
   :root { --main:#b02a37; --dark:#1f2937; --bg:#f3f4f6; --line:#e5e7eb; }
   * { box-sizing:border-box; }
@@ -61,13 +61,25 @@
 <body>
 <header>
   <div>
-    <h1>上财选课心愿单 <span id="ver" style="font-size:12px;opacity:.9">v1.3</span></h1>
+    <h1>上财选课心愿单 <span id="ver" style="font-size:12px;opacity:.9">v1.4</span></h1>
     <div class="sub">数据只保存在你自己的浏览器(不上传) · 录入编号自动补全 · 按班级自动筛选可选课程</div>
   </div>
   <button id="profile_chip">未填写个人信息 → 填写(用于筛选)</button>
 </header>
 <main>
   <div id="banner_holder"></div>
+
+  <div class="card" style="padding:10px 16px">
+    <details open>
+      <summary style="cursor:pointer;font-size:14px;font-weight:600;color:var(--main)">📌 2026级新生选课官方要点(据教务处附件1《网上选课通知》/附件2《选课暂行办法》)</summary>
+      <div style="font-size:12px;color:#374151;line-height:1.9;margin-top:8px">
+        ① 选课开放:<b>9/10(周四)12:00 – 9/18(周五)22:00</b>,先到先得、额满即止;关闭后一律不再受理补选/退课。<br>
+        ② <b>每天 22:00–次日 8:00 为系统维护时段:只能退课、不能选课</b>(有效抢课窗口为每天 8:00–22:00)。<br>
+        ③ 部分必修课由学校<b>先统一配课</b>;你只需自行选:公共外语(按分级+班级课表时段)、体育(按班级课表时段)、卫生保健、新生研讨课(1学分,大一内修完)、思政选择性必修、通识选修。<b>先到个人课表核对配课结果,遗漏/重复/错误再自行补退。</b><br>
+        ④ 每学期<b>选课学分上限 30 学分</b>;体育按学年选(体育I↔II、III↔IV 一致);退课名额随机释放,可每天留意捡漏;人数过少的选修课可能停开,请关注课表变化;选课前阅读课程备注中的选课说明。
+      </div>
+    </details>
+  </div>
 
   <div class="card">
     <h2>① 个人信息(仅用于"你的班级能选哪些课"的本地筛选)</h2>
@@ -178,7 +190,18 @@ window.CATDATA = {"v":2,"source":"附件3 2026级新生选课手册","generated"
   }
   function clsEligible(clsName, row){
     if (!clsName || !row || !row.cls || !row.cls.length) return true;   // 未填班级/手册未列明 → 视为开放
-    return row.cls.indexOf(clsName) >= 0;
+    return matchClassIn(clsName, row.cls);
+  }
+  function normEqName(n, cls){
+    var nn = String(n).replace(/^26/, '').replace(/数字/g, '').replace(/[（(]/g, '（').replace(/[）)]/g, '）').replace(/\s+/g, '');
+    var cc = String(cls).replace(/^26/, '').replace(/数字/g, '').replace(/[（(]/g, '（').replace(/[）)]/g, '）').replace(/\s+/g, '');
+    return nn === cc;
+  }
+  function matchClassIn(clsName, list){
+    for (var i = 0; i < list.length; i++){
+      if (list[i] === clsName || normEqName(list[i], clsName)) return true;
+    }
+    return false;
   }
   function slotTextOf(row){
     var m = row.times ? row.times.match(/星期([一二三四五六日天])\s*(\d{1,2}-\d{1,2})/) : null;
@@ -212,6 +235,26 @@ window.CATDATA = {"v":2,"source":"附件3 2026级新生选课手册","generated"
     return null;
   }
 
+  /* ---------- 班级名容错与提示 ---------- */
+  function normCls(n){
+    return String(n || '').replace('26', '').replace(/数字/g, '').replace(/[（(].*?[）)]/g, '').replace(/\s+/g, '');
+  }
+  function suggestClasses(cls){
+    if (!CAT || !cls) return [];
+    var t = normCls(cls);
+    if (!t) return [];
+    return CAT.classList.filter(function(n){ return n !== cls && normCls(n) === t; });
+  }
+  function clsSeenInModules(cls){
+    var seen = {};
+    CAT.courses.forEach(function(c){ if (c.cls && matchClassIn(cls, c.cls)) seen[c.module] = true; });
+    return seen;
+  }
+  function applySuggestion(name){
+    profile = { name: profile ? profile.name : '', no: profile ? profile.no : '', cls: name };
+    saveProfile(profile); fillProfileForm(); renderAll();
+  }
+
   /* ---------- 渲染 ---------- */
   function renderBanner(){
     var h = $('banner_holder');
@@ -228,12 +271,32 @@ window.CATDATA = {"v":2,"source":"附件3 2026级新生选课手册","generated"
     });
     engSlot = engSlot.filter(function(v,i,a){ return a.indexOf(v) === i; }).join('、');
     spoSlot = spoSlot.filter(function(v,i,a){ return a.indexOf(v) === i; }).join('、');
+    var extra = '';
+    if (CAT){
+      var fuzzyHit = CAT.classList.some(function(n){ return normEqName(n, profile.cls); });
+      var inList = CAT.classList.indexOf(profile.cls) >= 0 || fuzzyHit;
+      if (!inList){
+        var sug = suggestClasses(profile.cls);
+        extra = '<div style="margin-top:6px;color:#b91c1c">⚠️ 目录中没有「' + esc(profile.cls) + '」这个班级名。' +
+          (sug.length ? '你是不是:<b>' + sug.map(function(n){
+            return '<a href="javascript:void(0)" class="suglink" data-cls="' + esc(n) + '">' + esc(n) + '</a>';
+          }).join(' / ') + '</b>(点一下即可切换)' : '请核对录取/班级课表上的准确名称或问辅导员。') + '</div>';
+      } else {
+        var seen = clsSeenInModules(profile.cls);
+        if (!seen['体育']) extra = '<div style="margin-top:6px;color:#b45309">⚠️ 手册的体育名单里没有「' + esc(profile.cls) + '」:请确认与同学是否同属一个班名(常见易混:带"数字"的「26数字前沿交叉实验班(统计学)」与不带「数字」的「26前沿交叉实验班(统计学)」是不同班级)。若你是后者,手册中你的体育可能另有安排,以班级课表 / 9月10日系统为准。</div>';
+        else if (!seen['英语']) extra = '<div style="margin-top:6px;color:#b45309">⚠️ 手册英语名单里没有「' + esc(profile.cls) + '」:请核对班级名或查看班级课表。</div>';
+      }
+    }
     h.innerHTML = '<div class="banner ok">当前班级:<b>' + esc(profile.cls) + '</b>' +
       (profile.name ? ' · ' + esc(profile.name) : '') +
       (profile.no ? ' · 学号 ' + esc(profile.no) : '') +
       (engSlot ? ' | 你的英语可选时段:' + esc(engSlot) : '') +
       (spoSlot ? ' | 你的体育可选时段:' + esc(spoSlot) : '') +
-      ' <span style="color:#9ca3af">(按手册,以系统为准)</span></div>';
+      ' <span style="color:#9ca3af">(按手册,以系统为准)</span>' + extra + '</div>';
+    var sl = h.querySelectorAll('.suglink');
+    for (var i = 0; i < sl.length; i++){
+      sl[i].addEventListener('click', function(){ applySuggestion(this.getAttribute('data-cls')); });
+    }
   }
 
   function visibleItems(){
@@ -252,8 +315,18 @@ window.CATDATA = {"v":2,"source":"附件3 2026级新生选课手册","generated"
   function render(){
     var list = visibleItems();
     $('empty').hidden = list.length > 0;
-    $('stats').textContent = '共 ' + state.items.length + ' 门:主选 ' + state.items.filter(function(i){return i.status==='main';}).length +
-      ' / 备选 ' + state.items.filter(function(i){return i.status==='backup';}).length + ' · 更新 ' + new Date(state.updatedAt).toLocaleTimeString();
+    var credits = 0, known = 0;
+    state.items.forEach(function(it){
+      if (it.status !== 'main') return;
+      var r = findRow(it.code);
+      var cr = r && r.credit ? parseFloat(r.credit) : NaN;
+      if (!isNaN(cr)){ credits += cr; known++; }
+    });
+    var over = credits > 30;
+    var crColor = over ? '#b91c1c' : (credits >= 26 ? '#d97706' : '#16a34a');
+    var creditTxt = known ? ' · 主选学分合计 <b style="color:' + crColor + '">' + credits.toFixed(1) + '</b>/30' + (over ? ' ⚠️已超上限' : (credits >= 26 ? ' ⚠️接近上限' : '')) : '';
+    $('stats').innerHTML = '共 ' + state.items.length + ' 门:主选 ' + state.items.filter(function(i){return i.status==='main';}).length +
+      ' / 备选 ' + state.items.filter(function(i){return i.status==='backup';}).length + ' · 更新 ' + new Date(state.updatedAt).toLocaleTimeString() + creditTxt;
     var tb = $('tbody'); tb.innerHTML = '';
     list.forEach(function(it, idx){
       var r = findRow(it.code);
@@ -605,8 +678,25 @@ window.CATDATA = {"v":2,"source":"附件3 2026级新生选课手册","generated"
       return m !== 0 ? m : (a.code === b.code ? (a.sn < b.sn ? -1 : 1) : (a.code < b.code ? -1 : 1));
     });
     mask.querySelector('#b_cnt').textContent = '共 ' + rows.length + ' 个班次';
+    var warn = '';
+    if (profile && profile.cls && browseState.mod !== '全部'){
+      var any = CAT.courses.some(function(c){ return c.module === browseState.mod && c.cls && matchClassIn(profile.cls, c.cls); });
+      if (!any){
+        var sug = suggestClasses(profile.cls);
+        warn = '<div style="background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:8px;padding:8px 10px;font-size:12px;margin:6px 0">' +
+          '手册「' + esc(browseState.mod) + '」名单中没有「' + esc(profile.cls) + '」。' +
+          (sug.length ? '你是不是:<b>' + sug.map(function(n){
+            return '<a href="javascript:void(0)" class="suglink2" data-cls="' + esc(n) + '">' + esc(n) + '</a>';
+          }).join(' / ') + '</b>(点击切换班级后重新打开本页)' : '') +
+          ' 若班级无误,可能你的该课程另有安排,请以班级课表 / 9月10日系统为准(也可在主页取消勾选"只显示我班级可选的"查看全部班次)。</div>';
+      }
+    }
     if (!rows.length){
-      box.innerHTML = '<div class="cat-empty">没有符合条件的课程(试试切换分类或清空搜索)</div>';
+      box.innerHTML = (warn || '') + '<div class="cat-empty">没有符合条件的课程(试试切换分类或清空搜索)</div>';
+      var lk = box.querySelectorAll('.suglink2');
+      for (var k = 0; k < lk.length; k++){
+        lk[k].addEventListener('click', function(){ applySuggestion(this.getAttribute('data-cls')); });
+      }
       return;
     }
     var existed = {};
