@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>上财选课心愿单 v1.4</title>
+<title>上财选课心愿单 v1.5</title>
 <style>
   :root { --main:#b02a37; --dark:#1f2937; --bg:#f3f4f6; --line:#e5e7eb; }
   * { box-sizing:border-box; }
@@ -61,7 +61,7 @@
 <body>
 <header>
   <div>
-    <h1>上财选课心愿单 <span id="ver" style="font-size:12px;opacity:.9">v1.4</span></h1>
+    <h1>上财选课心愿单 <span id="ver" style="font-size:12px;opacity:.9">v1.5</span></h1>
     <div class="sub">数据只保存在你自己的浏览器(不上传) · 录入编号自动补全 · 按班级自动筛选可选课程</div>
   </div>
   <button id="profile_chip">未填写个人信息 → 填写(用于筛选)</button>
@@ -299,7 +299,12 @@ window.CATDATA = {"v":2,"source":"附件3 2026级新生选课手册","generated"
     }
   }
 
+  var currentList = [];
+  function ensureOrd(){
+    state.items.forEach(function(it, i){ if (typeof it.ord !== 'number') it.ord = i; });
+  }
   function visibleItems(){
+    ensureOrd();
     var fl = $('f_filter').value, q = ($('f_q').value || '').trim().toLowerCase();
     return state.items.filter(function(it){
       if (fl !== 'all' && it.status !== fl) return false;
@@ -309,11 +314,17 @@ window.CATDATA = {"v":2,"source":"附件3 2026级新生选课手册","generated"
         if (r && !clsEligible(profile.cls, r)) return false;
       }
       return true;
-    }).sort(function(a,b){ return a.status === b.status ? (a.prio - b.prio || (a.name < b.name ? -1 : 1)) : (a.status === 'main' ? -1 : 1); });
+    }).sort(function(a,b){
+      if (a.status !== b.status) return a.status === 'main' ? -1 : 1;
+      var ao = (typeof a.ord === 'number' ? a.ord : 9999), bo = (typeof b.ord === 'number' ? b.ord : 9999);
+      if (ao !== bo) return ao - bo;
+      return (a.prio - b.prio) || (a.name < b.name ? -1 : 1);
+    });
   }
 
   function render(){
     var list = visibleItems();
+    currentList = list;
     $('empty').hidden = list.length > 0;
     var credits = 0, known = 0;
     state.items.forEach(function(it){
@@ -350,9 +361,12 @@ window.CATDATA = {"v":2,"source":"附件3 2026级新生选课手册","generated"
         var tr = btn.closest('tr'), it = tr ? tr._it : null; if (!it) return;
         var act = btn.getAttribute('data-act');
         if (act === 'up' || act === 'down'){
-          var arr = state.items, i = arr.indexOf(it), j = act === 'up' ? i - 1 : i + 1;
-          if (j < 0 || j >= arr.length) return;
-          arr.splice(i,1); arr.splice(j,0,it); save();
+          ensureOrd();
+          var same = currentList.filter(function(x){ return x.status === it.status; });
+          var k = same.indexOf(it), k2 = act === 'up' ? k - 1 : k + 1;
+          if (k < 0 || k2 < 0 || k2 >= same.length) return;
+          var other = same[k2], tmp = it.ord; it.ord = other.ord; other.ord = tmp;
+          save();
         } else if (act === 'edit'){
           f_id.value = it.id; f_name.value = it.name; f_code.value = it.code; f_prio.value = it.prio;
           f_type.value = it.type || '其他'; f_status.value = it.status; f_time.value = it.time || ''; f_note.value = it.note || '';
